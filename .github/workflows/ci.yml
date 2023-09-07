@@ -1,0 +1,32 @@
+name: TOJ CI
+
+on:
+  pull_request:
+    branches: ["develop"]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥저장소의 코드 가져오기
+        uses: actions/checkout@v3
+
+      - name: 🏷노드 버전 설정
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18.17.1
+
+      - name: 💽노드 패키지 캐싱
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ./node_modules
+          key: ${{ github.event.repository.name }}-node-${{ hashFiles('**/package-lock.json') }}
+
+      - name: 📦패키지 설치 (캐시되지 않았을 경우)
+        if: steps.npm-cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+      - run: npm run lint --if-present
+      - run: npm run test --if-present
+      - run: npm run build --if-present
