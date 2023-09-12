@@ -2,8 +2,9 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User } from '@/models/entity/User';
 import { configService } from '@/config/config.service';
+import type { DataSourceOptions } from 'typeorm';
 
-export const AppDataSource = new DataSource({
+export const dataSourceOptions: DataSourceOptions = {
   type: 'postgres',
   host: configService.POSTGRE_HOST,
   port: parseInt(configService.POSTGRE_PORT),
@@ -15,4 +16,6 @@ export const AppDataSource = new DataSource({
   entities: [User],
   migrations: [],
   subscribers: [],
-});
+};
+
+export const AppDataSource = new DataSource(dataSourceOptions);
