@@ -1,6 +1,6 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { User } from '@/models/entity/User';
+import { User, SubmitCode, Problem, TestCase } from '@/models/entity';
 import { configService } from '@/config/config.service';
 import type { DataSourceOptions } from 'typeorm';
 
@@ -11,9 +11,9 @@ export const dataSourceOptions: DataSourceOptions = {
   username: configService.POSTGRE_USERNAME,
   password: configService.POSTGRE_PASSWORD,
   database: configService.POSTGRE_DATABASE,
-  synchronize: configService.isProduction() ? false : true,
-  logging: false,
-  entities: [User],
+  synchronize: !configService.isProduction(),
+  logging: !configService.isProduction(),
+  entities: [User, SubmitCode, Problem, TestCase],
   migrations: [],
   subscribers: [],
 };
