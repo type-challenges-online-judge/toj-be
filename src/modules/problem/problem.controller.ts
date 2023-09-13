@@ -23,7 +23,7 @@ export class ProblemController {
     summary: '존재하는 타입스크립트 챌린지 문제 리스트를 모두 반환합니다.',
   })
   @Get()
-  getHello() {
+  problemList() {
     return this.problemService.getProblemList();
   }
 }
