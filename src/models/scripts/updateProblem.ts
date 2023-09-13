@@ -5,6 +5,7 @@ import {
   getRepoContent,
   getProblemReadmeFile,
   getProblemTemplate,
+  getProblemTestCases,
 } from './apis';
 
 /**
@@ -36,23 +37,48 @@ const updateTableData = async () => {
         await AppDataSource.transaction(async (transactionalEntityManager) => {
           const files = await getRepoContent(problemDirectory.path);
 
-          const [number, level, ...title] = problemDirectory.name.split('-');
-          const { description, language } = await getProblemReadmeFile(files);
+          if (!(files instanceof Array)) {
+            return;
+          }
 
           const problem = new Problem();
+
+          /**
+           * 디렉터리로 부터 문제 제목, 번호, 난이도 추출 후 저장
+           */
+          const [number, level, ...title] = problemDirectory.name.split('-');
 
           problem.title = title.join(' ');
           problem.number = parseInt(number);
           problem.level = level;
+
+          /**
+           * 문제 설명 & 언어 저장
+           */
+          const { description, language } = await getProblemReadmeFile(files);
+
           problem.description = description;
           problem.language = language;
+
+          /**
+           * 문제 입력 템플릿 저장
+           */
           problem.template = await getProblemTemplate(files);
+
+          /**
+           * 테스트케이스 제작
+           */
+          const testCaseFileContent = await getProblemTestCases(files);
+
           problem.testCase = [
             ...(await createCorrectTestCases(
-              files,
+              testCaseFileContent,
               transactionalEntityManager,
             )),
-            ...(await createValidTestCases(files, transactionalEntityManager)),
+            ...(await createValidTestCases(
+              testCaseFileContent,
+              transactionalEntityManager,
+            )),
           ];
 
           await transactionalEntityManager.save(problem);

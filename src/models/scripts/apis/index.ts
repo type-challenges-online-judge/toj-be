@@ -76,3 +76,25 @@ export const getProblemTemplate = async (
 
   return ret;
 };
+
+export const getProblemTestCases = async (
+  files: RepositoryContentResponseDataType,
+): Promise<string> => {
+  let ret = '';
+
+  if (!(files instanceof Array)) {
+    return ret;
+  }
+  const testCaseFile = files.filter(({ name }) => name === 'test-cases.ts')[0];
+
+  if (!testCaseFile) {
+    return ret;
+  }
+
+  const file = await getRepoContent(testCaseFile.path);
+
+  // @ts-ignore
+  ret = atob(file.content);
+
+  return ret;
+};
