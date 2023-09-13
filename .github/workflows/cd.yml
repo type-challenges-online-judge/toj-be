@@ -27,6 +27,21 @@ jobs:
               ports: 3000
               build: npm run build
               start: npm run start:prod
+              env:
+                - name: GITHUB_PERSONAL_TOKEN
+                  secret: GITHUB_PERSONAL_TOKEN
+                - name: POSTGRE_DATABASE
+                  secret: POSTGRE_DATABASE
+                - name: POSTGRE_PASSWORD
+                  secret: POSTGRE_PASSWORD
+                - name: POSTGRE_USERNAME
+                  secret: POSTGRE_USERNAME
+                - name: POSTGRE_PORT
+                  secret: POSTGRE_PORT
+                - name: POSTGRE_HOST
+                  secret: POSTGRE_HOST
+                - name: MODE
+                  secret: MODE
             context:
               git:
                 url: git@github.com:${{ github.repository }}.git
