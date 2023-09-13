@@ -7,8 +7,11 @@ export class Problem extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ length: 100 })
+  @Column({ length: 100, unique: true })
   title: string;
+
+  @Column('smallint')
+  number: number;
 
   @Column()
   description: string;
@@ -16,8 +19,8 @@ export class Problem extends BaseEntity {
   @Column({ length: 20 })
   language: string;
 
-  @Column('smallint')
-  level: number;
+  @Column({ length: 20 })
+  level: string;
 
   @Column()
   template: string;
