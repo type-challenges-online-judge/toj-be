@@ -3,7 +3,7 @@ import 'dotenv/config';
 class ConfigService {
   constructor(private env: { [key: string]: string | undefined }) {}
 
-  private getEnvValue(key: string, throwOnMissing = true): string {
+  private getEnvValue(key: string, throwOnMissing: boolean): string {
     const value = this.env[key];
 
     if (value === undefined && throwOnMissing) {
@@ -13,9 +13,9 @@ class ConfigService {
     return value;
   }
 
-  public ensureValues(keys: string[]): ConfigService {
+  public ensureValues(keys: string[], throwOnMissing = false): ConfigService {
     keys.forEach((key) => {
-      const value = this.getEnvValue(key, true);
+      const value = this.getEnvValue(key, throwOnMissing);
 
       if (this.hasOwnProperty(key)) {
         return;
@@ -38,6 +38,8 @@ class ConfigService {
   }
 }
 
+const nonRequiredEnvironments = ['GITHUB_PERSONAL_TOKEN'] as const;
+
 const requiredEnvironments = [
   'MODE',
   'POSTGRE_HOST',
@@ -47,8 +49,13 @@ const requiredEnvironments = [
   'POSTGRE_DATABASE',
 ] as const;
 
-const configService = new ConfigService(process.env).ensureValues(
-  Object.values(requiredEnvironments),
-) as ConfigService & TupleToObject<typeof requiredEnvironments>;
+const configService = new ConfigService(process.env)
+  .ensureValues(Object.values(requiredEnvironments), true)
+  .ensureValues(
+    Object.values(nonRequiredEnvironments),
+    false,
+  ) as ConfigService &
+  TupleToObject<typeof requiredEnvironments> &
+  TupleToObject<typeof nonRequiredEnvironments>;
 
 export { configService };
