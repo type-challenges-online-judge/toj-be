@@ -21,4 +21,12 @@ describe('AppController (e2e)', () => {
       .expect(200)
       .expect('Hello World!');
   });
+
+  it('/problem/detail/{wrong id} (GET)', () => {
+    return request(app.getHttpServer()).get('/problem/detail/abc').expect(400);
+  });
+
+  it('/problem/detail/{non exist id} (GET)', () => {
+    return request(app.getHttpServer()).get('/problem/detail/-1').expect(400);
+  });
 });
