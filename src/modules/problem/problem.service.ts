@@ -9,8 +9,8 @@ export class ProblemService {
     @InjectRepository(Problem) private readonly repo: Repository<Problem>,
   ) {}
 
-  public async getProblemList() {
-    return await this.repo.find({
+  public async getProblemList(): Promise<Problem[]> {
+    const problems = await this.repo.find({
       select: {
         id: true,
         title: true,
@@ -18,5 +18,19 @@ export class ProblemService {
         level: true,
       },
     });
+
+    return problems;
+  }
+
+  public async getProblemDetail(problemId: number): Promise<Problem | null> {
+    const problem = this.repo
+      .createQueryBuilder('problem')
+      .select()
+      .where(`problem.id = ${problemId}`)
+      .leftJoin('problem.testCase', 'testCase')
+      .addSelect(['testCase.case', 'testCase.type'])
+      .getOne();
+
+    return problem;
   }
 }
