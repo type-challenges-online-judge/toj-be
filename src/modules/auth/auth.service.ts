@@ -14,7 +14,7 @@ type UserInfo = {
 
 @Injectable()
 export class AuthService {
-  app = new OAuthApp({
+  oauthApp = new OAuthApp({
     clientId: configService.GITHUB_OAUTH_CLIENT_ID,
     clientSecret: configService.GITHUB_OAUTH_CLIENT_SECRET,
   });
@@ -25,7 +25,7 @@ export class AuthService {
 
   async getGithubAccessToken(code: string): Promise<string> {
     try {
-      const { authentication } = await this.app.createToken({
+      const { authentication } = await this.oauthApp.createToken({
         code,
       });
 
@@ -44,7 +44,7 @@ export class AuthService {
       data: {
         user: { login, id },
       },
-    } = await this.app.checkToken({
+    } = await this.oauthApp.checkToken({
       token: accessToken,
     });
 
