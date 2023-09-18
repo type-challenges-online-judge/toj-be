@@ -4,6 +4,7 @@ import { BaseAPIDocument } from './swagger.document';
 import { SwaggerModule } from '@nestjs/swagger';
 import { ProblemModule } from './modules/problem/problem.module';
 import { RequestMethod } from '@nestjs/common';
+import { AuthModule } from './modules/auth/auth.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -25,7 +26,7 @@ async function bootstrap() {
    */
   const config = new BaseAPIDocument().initializeOptions();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [ProblemModule],
+    include: [ProblemModule, AuthModule],
   });
   SwaggerModule.setup('api', app, document);
 
