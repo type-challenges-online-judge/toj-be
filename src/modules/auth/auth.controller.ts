@@ -72,7 +72,7 @@ export class AuthController {
     description: '로그인 되어있지 않습니다.',
   })
   @ApiOperation({
-    summary: '로그아웃 합니다.',
+    summary: '로그인 인증에 사용되는 accessToken 쿠키를 삭제합니다.',
   })
   @Get('logout')
   @UseGuards(AuthGuard)
