@@ -14,6 +14,8 @@ export function Middleware(
           return req.query[value];
         case 'request':
           return req;
+        case 'cookies':
+          return req.cookies[value];
       }
     });
 
@@ -37,4 +39,14 @@ export function Req(target: any, propertyKey: string, parameterIndex: number) {
   }
 
   target.extractors.unshift({ type: 'request', value: null });
+}
+
+export function Cookies(key: string) {
+  return function (target: any, propertyKey: string, parameterIndex: number) {
+    if (!target.extractors) {
+      target.extractors = [];
+    }
+
+    target.extractors.unshift({ type: 'cookies', value: key });
+  };
 }
