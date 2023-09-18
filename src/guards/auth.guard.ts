@@ -3,24 +3,13 @@ import {
   CanActivate,
   ExecutionContext,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
 import { Cookies, Middleware, Req } from '@/decorators';
 import { tokenService } from '@/utils/token.service';
 
-@Injectable()
-export class AuthGuard implements CanActivate {
-  canActivate(context: ExecutionContext): boolean {
-    const req = context.switchToHttp().getRequest<Request>();
-    const res = context.switchToHttp().getResponse<Response>();
-
-    if (!this.verifyUser.apply(this, [req, res])) {
-      throw new UnauthorizedException('권한이 없습니다.');
-    }
-
-    return true;
-  }
-
+class ValidationMiddlewars {
   @Middleware
   verifyUser(
     @Cookies('accessToken') accessToken: string,
@@ -42,6 +31,36 @@ export class AuthGuard implements CanActivate {
 
     // 토큰의 유효성을 검사하는 함수에서 응답 객체에 토큰 값을 저장하는 것이 맞을까?
     req['user'] = decoded;
+
+    return true;
+  }
+}
+
+@Injectable()
+export class AuthGuard extends ValidationMiddlewars implements CanActivate {
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest<Request>();
+    const res = context.switchToHttp().getResponse<Response>();
+
+    if (!this.verifyUser.apply(this, [req, res])) {
+      throw new UnauthorizedException('권한이 없습니다.');
+    }
+
+    return true;
+  }
+}
+
+export class ReverseAuthGuard
+  extends ValidationMiddlewars
+  implements CanActivate
+{
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest<Request>();
+    const res = context.switchToHttp().getResponse<Response>();
+
+    if (this.verifyUser.apply(this, [req, res])) {
+      throw new BadRequestException('로그인 된 상태로 처리할 수 없습니다.');
+    }
 
     return true;
   }
