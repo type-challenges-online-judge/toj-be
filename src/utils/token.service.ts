@@ -27,6 +27,10 @@ class TokenService {
       return null;
     }
   }
+
+  get issuer() {
+    return this.JWT_ISSUER;
+  }
 }
 
 export const tokenService = new TokenService();
