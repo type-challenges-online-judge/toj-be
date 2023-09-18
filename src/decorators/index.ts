@@ -19,7 +19,7 @@ export function Middleware(
       }
     });
 
-    method(...args);
+    return method(...args);
   };
 }
 
