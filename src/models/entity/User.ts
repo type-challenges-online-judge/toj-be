@@ -13,6 +13,9 @@ export class User extends BaseEntity {
   @Column({ length: 255 })
   name: string;
 
+  @Column({ nullable: true })
+  profileUrl: string;
+
   @OneToMany(() => SubmitCode, (submitCode) => submitCode.user)
   submitCode: SubmitCode[];
 }

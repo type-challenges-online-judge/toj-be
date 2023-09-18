@@ -10,6 +10,7 @@ import { tokenService } from '@/utils/token.service';
 type UserInfo = {
   snsId: number;
   name: string;
+  profileUrl: string;
 };
 
 @Injectable()
@@ -41,17 +42,17 @@ export class AuthService {
 
   async getGithubUserInfo(accessToken: string): Promise<UserInfo> {
     const {
-      data: {
-        user: { login, id },
-      },
+      data: { user },
     } = await this.oauthApp.checkToken({
       token: accessToken,
     });
 
-    return { name: login, snsId: id };
+    const { login, id, avatar_url } = user;
+
+    return { name: login, snsId: id, profileUrl: avatar_url };
   }
 
-  async registerUser(snsId: number, name: string) {
+  async registerUser(snsId: number, name: string, profileUrl: string) {
     const user = await this.repo.findOne({
       where: {
         snsId,
@@ -62,14 +63,14 @@ export class AuthService {
       this.repo.insert({
         snsId,
         name,
+        profileUrl,
       });
     }
   }
 
-  createJwtToken(snsId: number, name: string): string {
+  createJwtToken(snsId: number): string {
     return tokenService.createToken({
       snsId,
-      name,
     });
   }
 }
