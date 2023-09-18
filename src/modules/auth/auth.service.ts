@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { OAuthApp } from 'octokit';
 import { configService } from '@/config/config.service';
 import { BadRequestException } from '@nestjs/common';
-import * as jwt from 'jsonwebtoken';
+import { tokenService } from '@/utils/token.service';
 
 type UserInfo = {
   snsId: number;
@@ -67,16 +67,9 @@ export class AuthService {
   }
 
   createJwtToken(snsId: number, name: string): string {
-    return jwt.sign(
-      {
-        snsId,
-        name,
-      },
-      'jwtSecret',
-      {
-        expiresIn: '1h',
-        issuer: 'toj',
-      },
-    );
+    return tokenService.createToken({
+      snsId,
+      name,
+    });
   }
 }
