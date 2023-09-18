@@ -10,7 +10,7 @@ export class SubmitCode extends BaseEntity {
   @Column()
   code: string;
 
-  @Column('boolean')
+  @Column({ type: 'boolean', default: false, nullable: true })
   isHidden: boolean;
 
   @Column('smallint')
