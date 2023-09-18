@@ -1,13 +1,16 @@
-import { Controller, Post, Query, Res } from '@nestjs/common';
+import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import {
   ApiBadRequestResponse,
   ApiCreatedResponse,
+  ApiOkResponse,
   ApiOperation,
   ApiQuery,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { responseTemplate } from '@/utils';
+import { AuthGuard } from '@/guards/auth.guard';
 import type { Response } from 'express';
 
 const TWO_MONTH_MILLISECOND = 1000 * 60 * 60 * 24 * 30 * 2;
@@ -58,5 +61,24 @@ export class AuthController {
     });
 
     return res.send(responseTemplate('정상적으로 로그인 되었습니다.', {}));
+  }
+
+  @ApiOkResponse({
+    description: '성공적으로 로그아웃 되었습니다.',
+  })
+  @ApiUnauthorizedResponse({
+    description: '로그인 되어있지 않습니다.',
+  })
+  @ApiOperation({
+    summary: '로그아웃 합니다.',
+  })
+  @Get('logout')
+  @UseGuards(AuthGuard)
+  async logout(@Res() res: Response) {
+    res.cookie('accessToken', '', {
+      maxAge: 0,
+    });
+
+    res.send(responseTemplate('성공적으로 로그아웃 되었습니다.', {}));
   }
 }
