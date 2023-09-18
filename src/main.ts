@@ -5,9 +5,15 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { ProblemModule } from './modules/problem/problem.module';
 import { RequestMethod } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
+import cookieParser = require('cookie-parser');
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  /**
+   * 쿠키 미들웨어
+   */
+  app.use(cookieParser());
 
   /**
    * 루트 경로를 제외한 모든 경로에 `/api` 접두사 추가
