@@ -24,6 +24,7 @@ export function Middleware(
 }
 
 export function Query(property: string) {
+  // eslint-disable-next-line
   return function (target: any, propertyKey: string, parameterIndex: number) {
     if (!target.extractors) {
       target.extractors = [];
@@ -33,6 +34,7 @@ export function Query(property: string) {
   };
 }
 
+// eslint-disable-next-line
 export function Req(target: any, propertyKey: string, parameterIndex: number) {
   if (!target.extractors) {
     target.extractors = [];
@@ -42,6 +44,7 @@ export function Req(target: any, propertyKey: string, parameterIndex: number) {
 }
 
 export function Cookies(key: string) {
+  // eslint-disable-next-line
   return function (target: any, propertyKey: string, parameterIndex: number) {
     if (!target.extractors) {
       target.extractors = [];
