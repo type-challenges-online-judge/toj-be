@@ -49,6 +49,7 @@ const requiredEnvironments = [
   'POSTGRE_DATABASE',
   'GITHUB_OAUTH_CLIENT_ID',
   'GITHUB_OAUTH_CLIENT_SECRET',
+  'JWT_SECRET',
 ] as const;
 
 const configService = new ConfigService(process.env)
