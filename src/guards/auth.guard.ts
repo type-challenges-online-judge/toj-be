@@ -32,6 +32,7 @@ export class AuthGuard implements CanActivate {
       return false;
     }
 
+    // 토큰의 유효성을 검사하는 함수에서 응답 객체에 토큰 값을 저장하는 것이 맞을까?
     req['user'] = decoded;
 
     return true;
