@@ -7,14 +7,14 @@ export class User extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column('int')
+  @Column({ type: 'int', unique: true })
   snsId: number;
 
   @Column({ length: 255 })
   name: string;
 
-  @Column({ length: 320 })
-  email: string;
+  @Column({ nullable: true })
+  profileUrl: string;
 
   @OneToMany(() => SubmitCode, (submitCode) => submitCode.user)
   submitCode: SubmitCode[];
