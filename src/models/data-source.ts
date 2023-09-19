@@ -14,7 +14,7 @@ export const dataSourceOptions: DataSourceOptions = {
   synchronize: !configService.isProduction(),
   logging: !configService.isProduction(),
   entities: [User, SubmitCode, Problem, TestCase],
-  migrations: [],
+  migrations: ['src/models/migrations/*.ts'],
   subscribers: [],
 };
 
