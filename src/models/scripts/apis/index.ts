@@ -1,5 +1,6 @@
 import { Octokit } from 'octokit';
 import { configService } from '@/config/config.service';
+import { decodeBase64UTF8 } from '@/utils';
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types';
 
 const octokit = new Octokit({
@@ -47,7 +48,7 @@ export const getProblemReadmeFile = async (
   const file = await getRepoContent(readmeFile.path);
 
   // @ts-ignore
-  ret.description = atob(file.content);
+  ret.description = decodeBase64UTF8(file.content);
   // @ts-ignore
   ret.language = /readme.ko.md/gi.test(file.name) ? 'ko' : 'en';
 
@@ -72,7 +73,7 @@ export const getProblemTemplate = async (
   const file = await getRepoContent(templateFile.path);
 
   // @ts-ignore
-  ret = atob(file.content);
+  ret = decodeBase64UTF8(file.content);
 
   return ret;
 };
@@ -94,7 +95,7 @@ export const getProblemTestCases = async (
   const file = await getRepoContent(testCaseFile.path);
 
   // @ts-ignore
-  ret = atob(file.content);
+  ret = decodeBase64UTF8(file.content);
 
   return ret;
 };

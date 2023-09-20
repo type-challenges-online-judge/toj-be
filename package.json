@@ -19,7 +19,12 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "update:problem": "ts-node --files -r tsconfig-paths/register ./src/models/scripts/updateProblem.ts"
+    "update:problem": "ts-node --files -r tsconfig-paths/register ./src/models/scripts/updateProblem.ts",
+    "typeorm": "ts-node --files -r tsconfig-paths/register ./node_modules/typeorm/cli.js --dataSource ./src/models/data-source.ts",
+    "migration:create": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:create ./src/models/migrations/Migration",
+    "migration:generate": "npm run typeorm migration:generate ./src/models/migrations/Migration",
+    "migration:run": "npm run typeorm  migration:run",
+    "migration:revert": "npm run typeorm migration:revert"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
@@ -28,7 +33,11 @@
     "@nestjs/swagger": "^7.1.11",
     "@nestjs/typeorm": "^10.0.0",
     "@octokit/types": "^11.1.0",
+    "@types/cookie-parser": "^1.4.4",
+    "cookie-parser": "^1.4.6",
     "dotenv": "^16.3.1",
+    "js-base64": "^3.7.5",
+    "jsonwebtoken": "^9.0.2",
     "octokit": "^3.1.0",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
