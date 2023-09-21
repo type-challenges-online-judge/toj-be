@@ -84,6 +84,7 @@ export class AuthController {
   })
   @ApiOperation({
     summary: '로그인 인증에 사용되는 accessToken 쿠키를 삭제합니다.',
+    deprecated: true,
   })
   @Get('logout')
   @UseGuards(AuthGuard)
