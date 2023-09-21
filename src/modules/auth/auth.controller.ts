@@ -13,16 +13,25 @@ import { responseTemplate } from '@/utils';
 import { AuthGuard, ReverseAuthGuard } from '@/guards/auth.guard';
 import type { Response } from 'express';
 
-const TWO_MONTH_MILLISECOND = 1000 * 60 * 60 * 24 * 30 * 2;
-
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  /**
+   * 로그인 API
+   */
   @ApiCreatedResponse({
     description:
-      '로그인(회원가입)이 성공적으로 수행되었고 `accessToken` 쿠키가 발급되었습니다.',
+      '로그인(회원가입)이 성공적으로 수행되었을 경우 `accessToken`을 반환합니다.',
+    schema: {
+      example: {
+        message: '로그인 인증을 위한 Access Token이 성공적으로 발급되었습니다.',
+        data: {
+          accessToken: '{access token}',
+        },
+      },
+    },
   })
   @ApiBadRequestResponse({
     description:
@@ -38,14 +47,14 @@ export class AuthController {
   })
   @UseGuards(ReverseAuthGuard)
   @Post('login')
-  async login(@Query('code') code: string, @Res() res: Response) {
+  async login(@Query('code') code: string) {
     /**
      * 1. 인증 코드로부터 사용자 정보를 얻어온다.
      */
-    const accessToken = await this.authService.getGithubAccessToken(code);
+    const githubAccessToken = await this.authService.getGithubAccessToken(code);
 
     const { snsId, name, profileUrl } =
-      await this.authService.getGithubUserInfo(accessToken);
+      await this.authService.getGithubUserInfo(githubAccessToken);
 
     /**
      * 2. 사용자 정보를 이용해 회원가입을 진행한다.
@@ -53,18 +62,20 @@ export class AuthController {
     await this.authService.registerUser(snsId, name, profileUrl);
 
     /**
-     * 3. 사용자 정보를 이용하여 JWT 토큰을 발급해 쿠키에 저장한다.
+     * 3. 사용자 정보를 이용하여 JWT 토큰을 발급해 반환한다.
      */
     const jwtToken = this.authService.createJwtToken(snsId);
 
-    res.cookie('accessToken', jwtToken, {
-      maxAge: TWO_MONTH_MILLISECOND,
-      httpOnly: true,
+    return responseTemplate('정상적으로 로그인 되었습니다.', {
+      accessToken: jwtToken,
     });
-
-    return res.send(responseTemplate('정상적으로 로그인 되었습니다.', {}));
   }
 
+  /**
+   * 로그아웃 API
+   *
+   * 로그인 인증을 위한 accessToken을 쿠키에 저장하여 관리하던 방식에서, Authorization 헤더에 저장하도록 변경되면서 해당 API를 사용하지 않도록 처리함.
+   */
   @ApiOkResponse({
     description: '성공적으로 로그아웃 되었습니다.',
   })
