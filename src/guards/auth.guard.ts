@@ -6,15 +6,12 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import type { Response, Request } from 'express';
-import { Cookies, Middleware, Req } from '@/decorators';
+import { Middleware, Req, Auth } from '@/decorators';
 import { tokenService } from '@/utils/token.service';
 
 class ValidationMiddlewars {
   @Middleware
-  verifyUser(
-    @Cookies('accessToken') accessToken: string,
-    @Req req: Request,
-  ): boolean {
+  verifyUser(@Auth('Bearer') accessToken: string, @Req req: Request): boolean {
     const decoded = tokenService.decodeToken(accessToken);
 
     if (!decoded) {
