@@ -23,6 +23,9 @@ import { responseTemplate } from '@/utils';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  /**
+   * 로그인 된 사용자 정보 제공 API
+   */
   @ApiOperation({
     summary: '현재 로그인 된 사용자의 정보를 제공하는 API입니다.',
   })
