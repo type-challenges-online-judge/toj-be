@@ -16,6 +16,12 @@ export function Middleware(
           return req;
         case 'cookies':
           return req.cookies[value];
+        case 'authorization':
+          if (!req.headers.authorization) {
+            return null;
+          }
+
+          return req.headers.authorization.split(`${value} `)[1];
       }
     });
 
@@ -51,5 +57,16 @@ export function Cookies(key: string) {
     }
 
     target.extractors.unshift({ type: 'cookies', value: key });
+  };
+}
+
+export function Auth(type: string) {
+  // eslint-disable-next-line
+  return function (target: any, propertyKey: string, parameterIndex: number) {
+    if (!target.extractors) {
+      target.extractors = [];
+    }
+
+    target.extractors.unshift({ type: 'authorization', value: type });
   };
 }
