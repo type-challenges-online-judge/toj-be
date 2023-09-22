@@ -5,6 +5,7 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { ProblemModule } from './modules/problem/problem.module';
 import { RequestMethod } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
+import { UserModule } from './modules/user/user.module';
 import cookieParser = require('cookie-parser');
 
 async function bootstrap() {
@@ -32,7 +33,7 @@ async function bootstrap() {
    */
   const config = new BaseAPIDocument().initializeOptions();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [ProblemModule, AuthModule],
+    include: [ProblemModule, AuthModule, UserModule],
   });
   SwaggerModule.setup('api', app, document);
 
