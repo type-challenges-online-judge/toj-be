@@ -8,6 +8,7 @@ export class BaseAPIDocument {
       .setTitle('TOJ API Spec')
       .setDescription('Type-challenges Online Judge의 API 명세입니다.')
       .setVersion('0.0.1')
+      .addBearerAuth()
       .build();
   }
 }
