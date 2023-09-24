@@ -129,8 +129,6 @@ export class ProblemService {
 
       const result = judge(submitCodeId, submitCode, i, template);
 
-      console.log(result);
-
       return acc + (result ? 1 : 0);
     }, 0);
 
@@ -138,8 +136,6 @@ export class ProblemService {
       const { template } = cur;
 
       const result = judge(submitCodeId, submitCode, i, template);
-
-      console.log(result);
 
       return acc + (result ? 1 : 0);
     }, 0);
@@ -157,7 +153,7 @@ export class ProblemService {
     submitCodeHistory.valid_score = +(
       (validCount / validTestCases.length) *
       100
-    ).toFixed(2);
+    ).toFixed(1);
 
     this.submitCodeRepo.save(submitCodeHistory);
   }
