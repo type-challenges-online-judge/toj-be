@@ -70,6 +70,8 @@ export class ProblemService {
     submitCodeId: number,
     submitCode: string,
   ): Promise<void> {
+    let caseNum = 0;
+
     const problem = await this.problemRepo.findOne({
       where: {
         id: problemId,
@@ -88,7 +90,7 @@ export class ProblemService {
     const noDuplicateIdentifier = judge(
       submitCodeId,
       submitCode,
-      -1,
+      caseNum,
       problem.template,
     );
 
@@ -124,18 +126,18 @@ export class ProblemService {
       }
     });
 
-    const correctCount = correctTestCases.reduce((acc, cur, i) => {
+    const correctCount = correctTestCases.reduce((acc, cur) => {
       const { template } = cur;
 
-      const result = judge(submitCodeId, submitCode, i, template);
+      const result = judge(submitCodeId, submitCode, ++caseNum, template);
 
       return acc + (result ? 1 : 0);
     }, 0);
 
-    const validCount = validTestCases.reduce((acc, cur, i) => {
+    const validCount = validTestCases.reduce((acc, cur) => {
       const { template } = cur;
 
-      const result = judge(submitCodeId, submitCode, i, template);
+      const result = judge(submitCodeId, submitCode, ++caseNum, template);
 
       return acc + (result ? 1 : 0);
     }, 0);
