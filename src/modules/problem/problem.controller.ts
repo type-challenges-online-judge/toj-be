@@ -43,9 +43,6 @@ export class ProblemController {
     required: true,
     description: '문제의 고유 id',
   })
-  @ApiBadRequestResponse({
-    description: '사용자 아이디 혹은 문제 번호가 잘못되었을 경우입니다.',
-  })
   @ApiUnauthorizedResponse({
     description: '로그인 되어있지 않습니다.',
   })

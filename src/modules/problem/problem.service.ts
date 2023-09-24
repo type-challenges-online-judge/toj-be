@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
@@ -51,12 +51,6 @@ export class ProblemService {
     const problem = await this.problemRepo.findOne({
       where: { id: problemId },
     });
-
-    if (!user || !problem) {
-      throw new BadRequestException(
-        '사용자 아이디가 잘못되었거나 없는 문제에 대한 제출입니다.',
-      );
-    }
 
     const submitCodeHistory = await this.submitCodeRepo.insert({
       code: submitCode,

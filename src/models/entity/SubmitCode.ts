@@ -19,9 +19,11 @@ export class SubmitCode extends BaseEntity {
   @Column('smallint')
   valid_score: number;
 
-  @ManyToOne(() => User, (user) => user.submitCode)
+  @ManyToOne(() => User, (user) => user.submitCode, { nullable: false })
   user: User;
 
-  @ManyToOne(() => Problem, (problem) => problem.submitCode)
+  @ManyToOne(() => Problem, (problem) => problem.submitCode, {
+    nullable: false,
+  })
   problem: Problem;
 }
