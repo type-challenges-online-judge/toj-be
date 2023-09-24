@@ -2,26 +2,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { judge } from './judge';
 
 describe('judge util test', () => {
-  const rightSubmitCode = `
-    type First<T extends any[]> = T extends (infer R)[]
-      ? R extends unknown
-        ? T[0]
-        : never
-      : never
-  `;
-
-  const wrongInputCaseSubmitCode = `
-    type First<T> = T extends (infer R)[]
-      ? R extends unknown
-        ? T[0]
-        : never
-      : never
-  `;
-
-  const wrongOutputCaseSubmitCode = `
-    type First<T> = any
-  `;
-
   const testCaseTemplate = `
     import type { Equal, Expect } from '@type-challenges/utils'
 
@@ -44,12 +24,15 @@ describe('judge util test', () => {
     const submitId = uuidv4();
     const testCaseId = uuidv4();
 
-    const result = judge(
-      submitId,
-      rightSubmitCode,
-      testCaseId,
-      testCaseTemplate,
-    );
+    const submitCode = `
+      type First<T extends any[]> = T extends (infer R)[]
+        ? R extends unknown
+          ? T[0]
+          : never
+        : never
+    `;
+
+    const result = judge(submitId, submitCode, testCaseId, testCaseTemplate);
 
     expect(result).toEqual(true);
   });
@@ -58,12 +41,15 @@ describe('judge util test', () => {
     const submitId = uuidv4();
     const testCaseId = uuidv4();
 
-    const result = judge(
-      submitId,
-      wrongInputCaseSubmitCode,
-      testCaseId,
-      testCaseTemplate,
-    );
+    const submitCode = `
+      type First<T> = T extends (infer R)[]
+        ? R extends unknown
+          ? T[0]
+          : never
+        : never
+    `;
+
+    const result = judge(submitId, submitCode, testCaseId, testCaseTemplate);
 
     expect(result).toEqual(false);
   });
@@ -72,12 +58,11 @@ describe('judge util test', () => {
     const submitId = uuidv4();
     const testCaseId = uuidv4();
 
-    const result = judge(
-      submitId,
-      wrongOutputCaseSubmitCode,
-      testCaseId,
-      testCaseTemplate,
-    );
+    const submitCode = `
+      type First<T> = any
+    `;
+
+    const result = judge(submitId, submitCode, testCaseId, testCaseTemplate);
 
     expect(result).toEqual(false);
   });
