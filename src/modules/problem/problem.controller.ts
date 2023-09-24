@@ -1,16 +1,107 @@
-import { BadRequestException, Controller, Get, Param } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import {
   ApiOperation,
   ApiOkResponse,
   ApiParam,
   ApiBadRequestResponse,
+  ApiTags,
+  ApiBody,
+  ApiUnauthorizedResponse,
+  ApiBearerAuth,
+  ApiCreatedResponse,
 } from '@nestjs/swagger';
+import { SubmittedCode } from './dto/submittedCode.dto';
 import { ProblemService } from './problem.service';
 import { responseTemplate } from '@/utils';
+import { AuthGuard } from '@/guards/auth.guard';
+import type { Request } from 'express';
+import type { JwtPayload } from 'jsonwebtoken';
 
+@ApiTags('problem')
 @Controller('problem')
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
+
+  /**
+   * 문제 정답 제출 API
+   */
+  @ApiBody({
+    type: SubmittedCode,
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    description: '문제의 고유 id',
+  })
+  @ApiBadRequestResponse({
+    description: '사용자 아이디 혹은 문제 번호가 잘못되었을 경우입니다.',
+  })
+  @ApiUnauthorizedResponse({
+    description: '로그인 되어있지 않습니다.',
+  })
+  @ApiOperation({
+    summary: '문제에 대한 사용자의 정답을 제출받아 채점을 진행합니다.',
+  })
+  @ApiCreatedResponse({
+    description: '정답 제출이 완료되어 채점이 시작되었습니다.',
+    schema: {
+      example: {
+        message: '정답 제출이 완료되어 채점이 시작되었습니다.',
+        data: {},
+      },
+    },
+  })
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard)
+  @Post('submit/:id')
+  async submitCode(
+    @Req() req: Request,
+    @Param('id') problemId: number,
+    @Body() data: SubmittedCode,
+  ) {
+    const { code } = data;
+
+    /**
+     * Guard를 통과하였을 경우 req.user 가 존재하여야 하지만 그렇지 않을 경우의 예외처리
+     */
+    const decodedUserToken = req['user'] as JwtPayload | undefined;
+
+    if (!decodedUserToken) {
+      throw new InternalServerErrorException('서버 오류.');
+    }
+
+    const { snsId } = decodedUserToken;
+
+    /**
+     * 제출 내역 생성
+     */
+    const submitCodeId = await this.problemService.createSubmitHistory(
+      snsId,
+      problemId,
+      code,
+    );
+
+    /**
+     * 비동기로 채점 시작
+     */
+    try {
+      this.problemService.startJudge(snsId, problemId, submitCodeId, code);
+    } catch (e) {
+      console.log(e);
+    }
+
+    return responseTemplate('정답 제출이 완료되어 채점이 시작되었습니다.', {});
+  }
 
   /**
    * 문제 리스트 조회 API
