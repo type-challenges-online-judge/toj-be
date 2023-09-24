@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
+import { judge } from '@/utils/judge';
 
 @Injectable()
 export class ProblemService {
@@ -69,8 +70,95 @@ export class ProblemService {
     submitCodeId: number,
     submitCode: string,
   ): Promise<void> {
-    setTimeout(() => {
-      console.log(userId, problemId, submitCodeId, submitCode);
-    }, 5000);
+    const problem = await this.problemRepo.findOne({
+      where: {
+        id: problemId,
+      },
+    });
+
+    const testCases = await this.testCaseRepo
+      .createQueryBuilder('test_case')
+      .select()
+      .where(`test_case.problemId = ${problemId}`)
+      .getMany();
+
+    /**
+     * 템플릿에 적힌 타입을 사용해서 정답을 제출하지 않았을 경우 에러처리
+     */
+    const noDuplicateIdentifier = judge(
+      submitCodeId,
+      submitCode,
+      -1,
+      problem.template,
+    );
+
+    if (noDuplicateIdentifier) {
+      const submitCodeHistory = await this.submitCodeRepo.findOne({
+        where: {
+          id: submitCodeId,
+        },
+      });
+
+      submitCodeHistory.correct_score = -2;
+      submitCodeHistory.valid_score = -2;
+
+      this.submitCodeRepo.save(submitCodeHistory);
+
+      return;
+    }
+
+    /**
+     * 테스트케이스 별 채점 진행
+     */
+    const correctTestCases = [];
+    const validTestCases = [];
+
+    testCases.forEach((testcase) => {
+      switch (testcase.type) {
+        case 'correct':
+          correctTestCases.push(testcase);
+          break;
+        case 'valid':
+          validTestCases.push(testcase);
+          break;
+      }
+    });
+
+    const correctCount = correctTestCases.reduce((acc, cur, i) => {
+      const { template } = cur;
+
+      const result = judge(submitCodeId, submitCode, i, template);
+
+      console.log(result);
+
+      return acc + (result ? 1 : 0);
+    }, 0);
+
+    const validCount = validTestCases.reduce((acc, cur, i) => {
+      const { template } = cur;
+
+      const result = judge(submitCodeId, submitCode, i, template);
+
+      console.log(result);
+
+      return acc + (result ? 1 : 0);
+    }, 0);
+
+    const submitCodeHistory = await this.submitCodeRepo.findOne({
+      where: {
+        id: submitCodeId,
+      },
+    });
+
+    submitCodeHistory.correct_score = +(
+      (correctCount / correctTestCases.length) *
+      100
+    ).toFixed(1);
+    submitCodeHistory.valid_score = +(
+      (validCount / validTestCases.length) *
+      100
+    ).toFixed(2);
+
+    this.submitCodeRepo.save(submitCodeHistory);
   }
 }
