@@ -8,6 +8,8 @@ import {
   Req,
   UseGuards,
   InternalServerErrorException,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -26,11 +28,40 @@ import { responseTemplate } from '@/utils';
 import { AuthGuard } from '@/guards/auth.guard';
 import type { Request } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
+import { Observable, interval, map } from 'rxjs';
+
+export type JudgeStatus = {
+  submitCodeId: number;
+  type: 'correct' | 'valid' | 'error' | 'doing' | 'finish';
+  currentCount?: number;
+  totalCount?: number;
+  score?: {
+    correct: number;
+    valid: number;
+  };
+};
 
 @ApiTags('problem')
 @Controller('problem')
 export class ProblemController {
   constructor(private readonly problemService: ProblemService) {}
+
+  judgeQueue: JudgeStatus[] = [];
+
+  @Sse('sse')
+  sse(): Observable<MessageEvent> {
+    return interval(1000).pipe(
+      map(() => {
+        const judgeStatus = this.judgeQueue.shift();
+
+        console.log('sse', judgeStatus);
+
+        return {
+          data: judgeStatus,
+        };
+      }),
+    );
+  }
 
   /**
    * 문제 정답 제출 API
@@ -92,7 +123,13 @@ export class ProblemController {
      * 비동기로 채점 시작
      */
     try {
-      this.problemService.startJudge(snsId, problemId, submitCodeId, code);
+      this.problemService.startJudge(
+        snsId,
+        problemId,
+        submitCodeId,
+        code,
+        this.judgeQueue,
+      );
     } catch (e) {
       console.log(e);
     }
