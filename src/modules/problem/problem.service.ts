@@ -4,6 +4,12 @@ import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
 import { judge } from '@/utils/judge';
 
+const CODE = {
+  ERROR: -3,
+  WAIT: -2,
+  DOING: -1,
+};
+
 @Injectable()
 export class ProblemService {
   constructor(
@@ -55,8 +61,8 @@ export class ProblemService {
 
     const submitCodeHistory = await this.submitCodeRepo.insert({
       code: submitCode,
-      correct_score: -1,
-      valid_score: -1,
+      correct_score: CODE.WAIT,
+      valid_score: CODE.WAIT,
       user,
       problem,
     });
@@ -78,6 +84,12 @@ export class ProblemService {
       },
     });
 
+    const submitCodeHistory = await this.submitCodeRepo.findOne({
+      where: {
+        id: submitCodeId,
+      },
+    });
+
     const testCases = await this.testCaseRepo
       .createQueryBuilder('test_case')
       .select()
@@ -87,6 +99,7 @@ export class ProblemService {
     /**
      * 템플릿에 적힌 타입을 사용해서 정답을 제출하지 않았을 경우 에러처리
      */
+
     const noDuplicateIdentifier = judge(
       submitCodeId,
       submitCode,
@@ -95,18 +108,17 @@ export class ProblemService {
     );
 
     if (noDuplicateIdentifier) {
-      const submitCodeHistory = await this.submitCodeRepo.findOne({
-        where: {
-          id: submitCodeId,
-        },
-      });
-
-      submitCodeHistory.correct_score = -2;
-      submitCodeHistory.valid_score = -2;
+      submitCodeHistory.correct_score = CODE.ERROR;
+      submitCodeHistory.valid_score = CODE.ERROR;
 
       this.submitCodeRepo.save(submitCodeHistory);
 
       return;
+    } else {
+      submitCodeHistory.correct_score = CODE.DOING;
+      submitCodeHistory.valid_score = CODE.DOING;
+
+      this.submitCodeRepo.save(submitCodeHistory);
     }
 
     /**
@@ -141,12 +153,6 @@ export class ProblemService {
 
       return acc + (result ? 1 : 0);
     }, 0);
-
-    const submitCodeHistory = await this.submitCodeRepo.findOne({
-      where: {
-        id: submitCodeId,
-      },
-    });
 
     submitCodeHistory.correct_score = +(
       (correctCount / correctTestCases.length) *
