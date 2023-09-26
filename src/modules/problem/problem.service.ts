@@ -3,7 +3,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
 import { judge } from '@/utils/judge';
-import type { JudgeStatus } from './problem.controller';
 
 const CODE = {
   ERROR: -3,
@@ -76,7 +75,6 @@ export class ProblemService {
     problemId: number,
     submitCodeId: number,
     submitCode: string,
-    judgeQueue: JudgeStatus[],
   ): Promise<void> {
     let caseNum = 0;
 
@@ -115,22 +113,12 @@ export class ProblemService {
 
       this.submitCodeRepo.save(submitCodeHistory);
 
-      judgeQueue.push({
-        submitCodeId,
-        type: 'error',
-      });
-
       return;
     } else {
       submitCodeHistory.correct_score = CODE.DOING;
       submitCodeHistory.valid_score = CODE.DOING;
 
       this.submitCodeRepo.save(submitCodeHistory);
-
-      judgeQueue.push({
-        submitCodeId,
-        type: 'doing',
-      });
     }
 
     /**
@@ -155,13 +143,6 @@ export class ProblemService {
 
       const result = await judge(submitCodeId, submitCode, ++caseNum, template);
 
-      judgeQueue.push({
-        submitCodeId,
-        totalCount: correctTestCases.length,
-        currentCount: i,
-        type: 'correct',
-      });
-
       return acc + (result ? 1 : 0);
     }, 0);
 
@@ -169,13 +150,6 @@ export class ProblemService {
       const { template } = cur;
 
       const result = await judge(submitCodeId, submitCode, ++caseNum, template);
-
-      judgeQueue.push({
-        submitCodeId,
-        totalCount: validTestCases.length,
-        currentCount: i,
-        type: 'valid',
-      });
 
       return acc + (result ? 1 : 0);
     }, 0);
@@ -195,14 +169,5 @@ export class ProblemService {
     submitCodeHistory.valid_score = validScore;
 
     this.submitCodeRepo.save(submitCodeHistory);
-
-    judgeQueue.push({
-      submitCodeId,
-      type: 'finish',
-      score: {
-        correct: correctScore,
-        valid: validScore,
-      },
-    });
   }
 }
