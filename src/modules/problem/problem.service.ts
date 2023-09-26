@@ -102,7 +102,7 @@ export class ProblemService {
      * 템플릿에 적힌 타입을 사용해서 정답을 제출하지 않았을 경우 에러처리
      */
 
-    const noDuplicateIdentifier = judge(
+    const noDuplicateIdentifier = await judge(
       submitCodeId,
       submitCode,
       caseNum,
@@ -150,10 +150,10 @@ export class ProblemService {
       }
     });
 
-    const correctCount = correctTestCases.reduce((acc, cur, i) => {
+    const correctCount = correctTestCases.reduce(async (acc, cur, i) => {
       const { template } = cur;
 
-      const result = judge(submitCodeId, submitCode, ++caseNum, template);
+      const result = await judge(submitCodeId, submitCode, ++caseNum, template);
 
       judgeQueue.push({
         submitCodeId,
@@ -165,10 +165,10 @@ export class ProblemService {
       return acc + (result ? 1 : 0);
     }, 0);
 
-    const validCount = validTestCases.reduce((acc, cur, i) => {
+    const validCount = validTestCases.reduce(async (acc, cur, i) => {
       const { template } = cur;
 
-      const result = judge(submitCodeId, submitCode, ++caseNum, template);
+      const result = await judge(submitCodeId, submitCode, ++caseNum, template);
 
       judgeQueue.push({
         submitCodeId,
@@ -180,6 +180,9 @@ export class ProblemService {
       return acc + (result ? 1 : 0);
     }, 0);
 
+    /**
+     * TODO: 테스트케이스가 없는 경우 처리
+     */
     const correctScore = parseFloat(
       ((correctCount / correctTestCases.length) * 100).toFixed(1),
     );

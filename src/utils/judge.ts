@@ -1,27 +1,49 @@
 import * as fs from 'node:fs';
 import { join } from 'node:path';
-import { spawnSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 
-export const judge = (
+const createJudgingFile = (path: string, data: string): Promise<void> => {
+  return new Promise<void>((resolve) => {
+    fs.writeFile(path, data, { encoding: 'utf-8' }, () => {
+      resolve();
+    });
+  });
+};
+
+const judgeFile = (cmd: string): Promise<boolean> => {
+  const projectRootPath = join(__dirname, '..', '..');
+
+  return new Promise<boolean>((resolve) => {
+    const process = spawn(cmd, {
+      cwd: projectRootPath,
+      shell: true,
+    });
+
+    process.stderr.on('data', () => {
+      resolve(false);
+    });
+
+    process.on('close', () => {
+      resolve(true);
+    });
+  });
+};
+
+export const judge = async (
   submitId: number,
   submitCode: string,
   testCaseId: number,
   testCaseTemplate: string,
-): boolean => {
+): Promise<boolean> => {
   const path = join(__dirname, `${submitId}-${testCaseId}.submit.ts`);
   const data = `${submitCode}\n${testCaseTemplate}`;
 
-  fs.writeFileSync(path, data, {
-    encoding: 'utf-8',
-  });
+  await createJudgingFile(path, data);
 
-  const projectRootPath = join(__dirname, '..', '..');
   const tsNodeRelativePath = join('.', 'node_modules', '.bin', 'ts-node');
+  const cmd = `${tsNodeRelativePath} ${path}`;
 
-  const result = spawnSync(`${tsNodeRelativePath} ${path}`, {
-    cwd: projectRootPath,
-    shell: true,
-  });
+  const result = await judgeFile(cmd);
 
-  return result.stderr.byteLength === 0;
+  return result;
 };

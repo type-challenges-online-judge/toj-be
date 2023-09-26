@@ -20,7 +20,7 @@ describe('judge util test', () => {
     ]
   `;
 
-  it('모든 케이스를 통과하는 제출 코드일 경우', () => {
+  it('모든 케이스를 통과하는 제출 코드일 경우', async () => {
     const submitId = uuidv4();
     const testCaseId = uuidv4();
 
@@ -32,12 +32,17 @@ describe('judge util test', () => {
         : never
     `;
 
-    const result = judge(submitId, submitCode, testCaseId, testCaseTemplate);
+    const result = await judge(
+      submitId,
+      submitCode,
+      testCaseId,
+      testCaseTemplate,
+    );
 
     expect(result).toEqual(true);
   });
 
-  it('입력 케이스에서 실패하는 제출 코드일 경우', () => {
+  it('입력 케이스에서 실패하는 제출 코드일 경우', async () => {
     const submitId = uuidv4();
     const testCaseId = uuidv4();
 
@@ -49,12 +54,17 @@ describe('judge util test', () => {
         : never
     `;
 
-    const result = judge(submitId, submitCode, testCaseId, testCaseTemplate);
+    const result = await judge(
+      submitId,
+      submitCode,
+      testCaseId,
+      testCaseTemplate,
+    );
 
     expect(result).toEqual(false);
   });
 
-  it('출력 케이스에서 실패하는 제출 코드일 경우', () => {
+  it('출력 케이스에서 실패하는 제출 코드일 경우', async () => {
     const submitId = uuidv4();
     const testCaseId = uuidv4();
 
@@ -62,7 +72,12 @@ describe('judge util test', () => {
       type First<T> = any
     `;
 
-    const result = judge(submitId, submitCode, testCaseId, testCaseTemplate);
+    const result = await judge(
+      submitId,
+      submitCode,
+      testCaseId,
+      testCaseTemplate,
+    );
 
     expect(result).toEqual(false);
   });
