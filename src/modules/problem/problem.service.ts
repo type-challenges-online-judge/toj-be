@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
 import { judge } from '@/utils/judge';
+import { JudgeStatus } from './dto/judgeStatus.dto';
 
-const CODE = {
-  ERROR: -3,
-  WAIT: -2,
-  DOING: -1,
-};
+export const enum SCORE_STATE {
+  NOT_EXIST = -5,
+  ERROR = -4,
+  WAITING = -3,
+  PROGRESSING = -2,
+  DONE = -1,
+}
 
 @Injectable()
 export class ProblemService {
@@ -23,6 +26,17 @@ export class ProblemService {
     private readonly testCaseRepo: Repository<TestCase>,
   ) {}
 
+  /**
+   * 제출 내역 id를 키로, 채점 현황을 값으로 저장하는 Map 객체
+   *
+   * TODO: 당장은 비효율적이더라도 변수에 관리하지만, 추후 redis와 같은 캐시 DB로 이주시킬 예정
+   */
+  correctTestCaseStatus: Map<number, JudgeStatus> = new Map();
+  validTestCaseStatus: Map<number, JudgeStatus> = new Map();
+
+  /**
+   * 문제 리스트 조회 메서드
+   */
   public async getProblemList(): Promise<Problem[]> {
     const problems = await this.problemRepo.find({
       select: {
@@ -36,6 +50,9 @@ export class ProblemService {
     return problems;
   }
 
+  /**
+   * 문제 상세정보 조회 메서드
+   */
   public async getProblemDetail(problemId: number): Promise<Problem | null> {
     const problem = this.problemRepo
       .createQueryBuilder('problem')
@@ -48,6 +65,9 @@ export class ProblemService {
     return problem;
   }
 
+  /**
+   * 제출 내역 생성 메서드
+   */
   public async createSubmitHistory(
     userId: number,
     problemId: number,
@@ -61,8 +81,8 @@ export class ProblemService {
 
     const submitCodeHistory = await this.submitCodeRepo.insert({
       code: submitCode,
-      correct_score: CODE.WAIT,
-      valid_score: CODE.WAIT,
+      correct_score: SCORE_STATE.WAITING,
+      valid_score: SCORE_STATE.WAITING,
       user,
       problem,
     });
@@ -70,6 +90,9 @@ export class ProblemService {
     return submitCodeHistory.identifiers[0].id;
   }
 
+  /**
+   * 채점 메서드
+   */
   public async startJudge(
     userId: number,
     problemId: number,
@@ -99,7 +122,6 @@ export class ProblemService {
     /**
      * 템플릿에 적힌 타입을 사용해서 정답을 제출하지 않았을 경우 에러처리
      */
-
     const noDuplicateIdentifier = await judge(
       submitCodeId,
       submitCode,
@@ -108,21 +130,41 @@ export class ProblemService {
     );
 
     if (noDuplicateIdentifier) {
-      submitCodeHistory.correct_score = CODE.ERROR;
-      submitCodeHistory.valid_score = CODE.ERROR;
+      submitCodeHistory.correct_score = SCORE_STATE.ERROR;
+      submitCodeHistory.valid_score = SCORE_STATE.ERROR;
 
       this.submitCodeRepo.save(submitCodeHistory);
+
+      this.correctTestCaseStatus.set(
+        submitCodeId,
+        new JudgeStatus({ state: SCORE_STATE.ERROR }),
+      );
+
+      this.validTestCaseStatus.set(
+        submitCodeId,
+        new JudgeStatus({ state: SCORE_STATE.ERROR }),
+      );
 
       return;
-    } else {
-      submitCodeHistory.correct_score = CODE.DOING;
-      submitCodeHistory.valid_score = CODE.DOING;
-
-      this.submitCodeRepo.save(submitCodeHistory);
     }
 
+    submitCodeHistory.correct_score = SCORE_STATE.PROGRESSING;
+    submitCodeHistory.valid_score = SCORE_STATE.PROGRESSING;
+
+    this.submitCodeRepo.save(submitCodeHistory);
+
+    this.correctTestCaseStatus.set(
+      submitCodeId,
+      new JudgeStatus({ state: SCORE_STATE.PROGRESSING }),
+    );
+
+    this.validTestCaseStatus.set(
+      submitCodeId,
+      new JudgeStatus({ state: SCORE_STATE.PROGRESSING }),
+    );
+
     /**
-     * 테스트케이스 별 채점 진행
+     * 테스트케이스 분리
      */
     const correctTestCases = [];
     const validTestCases = [];
@@ -138,36 +180,100 @@ export class ProblemService {
       }
     });
 
-    const correctCount = correctTestCases.reduce(async (acc, cur, i) => {
-      const { template } = cur;
+    /**
+     * 정확성 테스트케이스 채점 진행
+     */
+    if (correctTestCases.length === 0) {
+      this.correctTestCaseStatus.set(
+        submitCodeId,
+        new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
+      );
+    } else {
+      const correctCount = correctTestCases.reduce(async (acc, cur, i) => {
+        this.correctTestCaseStatus.set(
+          submitCodeId,
+          new JudgeStatus({
+            state: SCORE_STATE.PROGRESSING,
+            currentTestCase: i,
+            totalTestCaseLength: correctTestCases.length,
+          }),
+        );
 
-      const result = await judge(submitCodeId, submitCode, ++caseNum, template);
+        const { template } = cur;
 
-      return acc + (result ? 1 : 0);
-    }, 0);
+        const result = await judge(
+          submitCodeId,
+          submitCode,
+          ++caseNum,
+          template,
+        );
 
-    const validCount = validTestCases.reduce(async (acc, cur, i) => {
-      const { template } = cur;
+        return acc + (result ? 1 : 0);
+      }, 0);
 
-      const result = await judge(submitCodeId, submitCode, ++caseNum, template);
+      const correctScore = parseFloat(
+        ((correctCount / correctTestCases.length) * 100).toFixed(1),
+      );
 
-      return acc + (result ? 1 : 0);
-    }, 0);
+      submitCodeHistory.correct_score = correctScore;
+
+      this.submitCodeRepo.save(submitCodeHistory);
+
+      this.correctTestCaseStatus.set(
+        submitCodeId,
+        new JudgeStatus({
+          state: SCORE_STATE.DONE,
+          score: correctScore,
+        }),
+      );
+    }
 
     /**
-     * TODO: 테스트케이스가 없는 경우 처리
+     * 유효성 테스트케이스 채점 진행
      */
-    const correctScore = parseFloat(
-      ((correctCount / correctTestCases.length) * 100).toFixed(1),
-    );
+    if (validTestCases.length === 0) {
+      this.validTestCaseStatus.set(
+        submitCodeId,
+        new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
+      );
+    } else {
+      const validCount = validTestCases.reduce(async (acc, cur, i) => {
+        this.validTestCaseStatus.set(
+          submitCodeId,
+          new JudgeStatus({
+            state: SCORE_STATE.PROGRESSING,
+            currentTestCase: i,
+            totalTestCaseLength: validTestCases.length,
+          }),
+        );
 
-    const validScore = parseFloat(
-      ((validCount / validTestCases.length) * 100).toFixed(1),
-    );
+        const { template } = cur;
 
-    submitCodeHistory.correct_score = correctScore;
-    submitCodeHistory.valid_score = validScore;
+        const result = await judge(
+          submitCodeId,
+          submitCode,
+          ++caseNum,
+          template,
+        );
 
-    this.submitCodeRepo.save(submitCodeHistory);
+        return acc + (result ? 1 : 0);
+      }, 0);
+
+      const validScore = parseFloat(
+        ((validCount / validTestCases.length) * 100).toFixed(1),
+      );
+
+      submitCodeHistory.valid_score = validScore;
+
+      this.submitCodeRepo.save(submitCodeHistory);
+
+      this.validTestCaseStatus.set(
+        submitCodeId,
+        new JudgeStatus({
+          state: SCORE_STATE.DONE,
+          score: validScore,
+        }),
+      );
+    }
   }
 }
