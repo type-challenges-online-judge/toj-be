@@ -193,7 +193,11 @@ export class ProblemService {
         new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
       );
     } else {
-      const correctCount = correctTestCases.reduce(async (acc, cur, i) => {
+      let correctCount = 0;
+
+      for (let i = 0; i < correctTestCases.length; i++) {
+        const testCase = correctTestCases[i];
+
         this.correctTestCaseStatus.set(
           submitCodeId,
           new JudgeStatus({
@@ -203,7 +207,7 @@ export class ProblemService {
           }),
         );
 
-        const { template } = cur;
+        const { template } = testCase;
 
         const result = await judge(
           submitCodeId,
@@ -212,14 +216,14 @@ export class ProblemService {
           template,
         );
 
-        return acc + (result ? 1 : 0);
-      }, 0);
+        if (result) {
+          correctCount++;
+        }
+      }
 
       const correctScore = parseFloat(
         ((correctCount / correctTestCases.length) * 100).toFixed(1),
       );
-
-      console.log('??????', correctCount);
 
       submitCodeHistory.correct_score = correctScore;
 
@@ -247,7 +251,11 @@ export class ProblemService {
         new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
       );
     } else {
-      const validCount = validTestCases.reduce(async (acc, cur, i) => {
+      let validCount = 0;
+
+      for (let i = 0; i < validTestCases.length; i++) {
+        const testCase = validTestCases[i];
+
         this.validTestCaseStatus.set(
           submitCodeId,
           new JudgeStatus({
@@ -257,7 +265,7 @@ export class ProblemService {
           }),
         );
 
-        const { template } = cur;
+        const { template } = testCase;
 
         const result = await judge(
           submitCodeId,
@@ -266,8 +274,10 @@ export class ProblemService {
           template,
         );
 
-        return acc + (result ? 1 : 0);
-      }, 0);
+        if (result) {
+          validCount++;
+        }
+      }
 
       const validScore = parseFloat(
         ((validCount / validTestCases.length) * 100).toFixed(1),
