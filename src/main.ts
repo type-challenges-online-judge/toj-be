@@ -3,7 +3,7 @@ import { AppModule } from '@/app.module';
 import { BaseAPIDocument } from './swagger.document';
 import { SwaggerModule } from '@nestjs/swagger';
 import { ProblemModule } from './modules/problem/problem.module';
-import { RequestMethod } from '@nestjs/common';
+import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import cookieParser = require('cookie-parser');
@@ -27,6 +27,19 @@ async function bootstrap() {
       },
     ],
   });
+
+  /**
+   * dto에서 지정한 룰에 따라 자동으로 검증되도록 옵션 추가
+   */
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  );
 
   /**
    * swagger 관련 설정
