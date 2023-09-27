@@ -39,3 +39,6 @@ lerna-debug.log*
 
 # typeorm
 *-Migration.ts
+
+# 채점 파일
+*.submit.ts

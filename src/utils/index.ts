@@ -1,5 +1,7 @@
 import { Base64 } from 'js-base64';
 
+export * from './type-challenges';
+
 export const responseTemplate = (message: string, data: unknown) => {
   return {
     message,

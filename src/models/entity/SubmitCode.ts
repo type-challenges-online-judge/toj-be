@@ -13,15 +13,17 @@ export class SubmitCode extends BaseEntity {
   @Column({ type: 'boolean', default: false, nullable: true })
   isHidden: boolean;
 
-  @Column('smallint')
+  @Column('real')
   correct_score: number;
 
-  @Column('smallint')
+  @Column('real')
   valid_score: number;
 
-  @ManyToOne(() => User, (user) => user.submitCode)
+  @ManyToOne(() => User, (user) => user.submitCode, { nullable: false })
   user: User;
 
-  @ManyToOne(() => Problem, (problem) => problem.submitCode)
+  @ManyToOne(() => Problem, (problem) => problem.submitCode, {
+    nullable: false,
+  })
   problem: Problem;
 }
