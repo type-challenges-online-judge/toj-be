@@ -296,4 +296,19 @@ export class ProblemService {
       );
     }
   }
+
+  /**
+   *
+   */
+  async getSubmitCodeStatus(
+    submitCodeId: number,
+    type: 'correct' | 'valid',
+  ): Promise<JudgeStatus | undefined> {
+    switch (type) {
+      case 'correct':
+        return this.correctTestCaseStatus.get(submitCodeId);
+      case 'valid':
+        return this.validTestCaseStatus.get(submitCodeId);
+    }
+  }
 }
