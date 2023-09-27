@@ -10,7 +10,10 @@ export const createCorrectTestCases = async (
   const correctRegExp =
     /Expect\s*<\s*(Equal|Alike)\s*<(.|\n)*?(>\s*){2,},{0,1}/g;
 
-  const correctTestTemplate = template.replaceAll('// @ts-expect-error', '');
+  const correctTestTemplate = template.replaceAll(
+    '// @ts-expect-error',
+    '// @ts-ignore',
+  );
 
   const correctTestCases = template.match(correctRegExp);
 
@@ -76,7 +79,7 @@ export const createValidTestCases = async (
 
       const willRemovedString = validTestCases[j].replace(
         '// @ts-expect-error\n',
-        '',
+        '// @ts-ignore\n',
       );
 
       dupTemplate = dupTemplate.replace(validTestCases[j], willRemovedString);
