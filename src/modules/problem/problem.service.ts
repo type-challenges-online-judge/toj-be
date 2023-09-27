@@ -184,6 +184,10 @@ export class ProblemService {
      * 정확성 테스트케이스 채점 진행
      */
     if (correctTestCases.length === 0) {
+      submitCodeHistory.correct_score = SCORE_STATE.NOT_EXIST;
+
+      this.submitCodeRepo.save(submitCodeHistory);
+
       this.correctTestCaseStatus.set(
         submitCodeId,
         new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
@@ -215,6 +219,8 @@ export class ProblemService {
         ((correctCount / correctTestCases.length) * 100).toFixed(1),
       );
 
+      console.log('??????', correctCount);
+
       submitCodeHistory.correct_score = correctScore;
 
       this.submitCodeRepo.save(submitCodeHistory);
@@ -232,6 +238,10 @@ export class ProblemService {
      * 유효성 테스트케이스 채점 진행
      */
     if (validTestCases.length === 0) {
+      submitCodeHistory.valid_score = SCORE_STATE.NOT_EXIST;
+
+      this.submitCodeRepo.save(submitCodeHistory);
+
       this.validTestCaseStatus.set(
         submitCodeId,
         new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
