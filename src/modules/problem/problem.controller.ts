@@ -8,6 +8,7 @@ import {
   Req,
   UseGuards,
   InternalServerErrorException,
+  Query,
 } from '@nestjs/common';
 import {
   ApiOperation,
@@ -26,6 +27,7 @@ import { responseTemplate } from '@/utils';
 import { AuthGuard } from '@/guards/auth.guard';
 import type { Request } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
+import { JudgeInfo } from './dto/judgeInfo.dto';
 
 @ApiTags('problem')
 @Controller('problem')
@@ -205,5 +207,50 @@ export class ProblemController {
     return responseTemplate('정답 제출이 완료되어 채점이 시작되었습니다.', {
       submitCodeId,
     });
+  }
+
+  /**
+   * 제출 답안의 채점 현황 조회 API
+   */
+  @ApiBadRequestResponse({
+    description:
+      '`correct`, `valid`가 아닌 다른 다른 타입을 요청하였거나, 해당 제출 코드에 대한 채점 내역이 없습니다.',
+  })
+  @ApiOkResponse({
+    description: '제출 코드의 채점 현황을 성공적으로 조회했습니다.',
+    schema: {
+      example: {
+        message: '제출 코드의 채점 현황을 성공적으로 조회했습니다.',
+        data: {
+          JudgeStatus: {
+            state: -2,
+            score: 0,
+            currentTestCase: 1,
+            totalTestCaseLength: 4,
+          },
+        },
+      },
+    },
+  })
+  @ApiOperation({
+    summary: '제출 코드의 채점 현황을 조회합니다.',
+    description: '',
+  })
+  @Get('submit/status')
+  async getSubmitCodeStatus(@Query() query: JudgeInfo) {
+    const { submitCodeId, type } = query;
+
+    const judgeStatus = await this.problemService.getSubmitCodeStatus(
+      submitCodeId,
+      type,
+    );
+
+    if (!judgeStatus) {
+      throw new BadRequestException(
+        '`correct`, `valid`가 아닌 다른 다른 타입을 요청하였거나, 해당 제출 코드에 대한 채점 내역이 없습니다.',
+      );
+    }
+
+    return responseTemplate('', { judgeStatus });
   }
 }
