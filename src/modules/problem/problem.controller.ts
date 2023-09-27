@@ -54,7 +54,9 @@ export class ProblemController {
     schema: {
       example: {
         message: '정답 제출이 완료되어 채점이 시작되었습니다.',
-        data: {},
+        data: {
+          submitCodeId: 1234,
+        },
       },
     },
   })
@@ -97,7 +99,9 @@ export class ProblemController {
       console.log(e);
     }
 
-    return responseTemplate('정답 제출이 완료되어 채점이 시작되었습니다.', {});
+    return responseTemplate('정답 제출이 완료되어 채점이 시작되었습니다.', {
+      submitCodeId,
+    });
   }
 
   /**
