@@ -7,7 +7,6 @@ import {
   Post,
   Req,
   UseGuards,
-  InternalServerErrorException,
   Query,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
@@ -16,7 +15,6 @@ import { ProblemService } from './problem.service';
 import { responseTemplate } from '@/utils';
 import { AuthGuard } from '@/guards';
 import type { Request } from 'express';
-import type { JwtPayload } from 'jsonwebtoken';
 import { JudgeInfo } from './dto/judgeInfo.dto';
 import {
   ApiProblem,
@@ -75,16 +73,7 @@ export class ProblemController {
   ) {
     const { code } = data;
 
-    /**
-     * Guard를 통과하였을 경우 req.user 가 존재하여야 하지만 그렇지 않을 경우의 예외처리
-     */
-    const decodedUserToken = req['user'] as JwtPayload | undefined;
-
-    if (!decodedUserToken) {
-      throw new InternalServerErrorException('서버 오류.');
-    }
-
-    const { snsId } = decodedUserToken;
+    const { snsId } = req['user'];
 
     /**
      * 제출 내역 생성
@@ -99,7 +88,7 @@ export class ProblemController {
      * 비동기로 채점 시작
      */
     try {
-      this.problemService.startJudge(snsId, problemId, submitCodeId, code);
+      this.problemService.startJudge(problemId, submitCodeId, code);
     } catch (e) {
       console.log(e);
     }
