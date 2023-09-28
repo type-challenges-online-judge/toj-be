@@ -2,7 +2,7 @@ import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiTags } from '@nestjs/swagger';
 import { responseTemplate } from '@/utils';
-import { AuthGuard, ReverseAuthGuard } from '@/guards/auth.guard';
+import { AuthGuard, ReverseAuthGuard } from '@/guards';
 import { ApiLogin, ApiLogout } from './swagger';
 import type { Response } from 'express';
 

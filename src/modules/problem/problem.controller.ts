@@ -14,7 +14,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { SubmittedCode } from './dto/submittedCode.dto';
 import { ProblemService } from './problem.service';
 import { responseTemplate } from '@/utils';
-import { AuthGuard } from '@/guards/auth.guard';
+import { AuthGuard } from '@/guards';
 import type { Request } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
 import { JudgeInfo } from './dto/judgeInfo.dto';

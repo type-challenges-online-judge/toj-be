@@ -5,7 +5,7 @@ import {
   UseGuards,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { AuthGuard } from '@/guards/auth.guard';
+import { AuthGuard } from '@/guards';
 import { ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import type { Request } from 'express';
