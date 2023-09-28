@@ -1,6 +1,7 @@
 import * as fs from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
+import { ROOT_PATH } from '@/constants';
 
 const createJudgingFile = (path: string, data: string): Promise<void> => {
   return new Promise<void>((resolve) => {
@@ -11,11 +12,9 @@ const createJudgingFile = (path: string, data: string): Promise<void> => {
 };
 
 const judgeFile = (cmd: string): Promise<boolean> => {
-  const projectRootPath = join(__dirname, '..', '..');
-
   return new Promise<boolean>((resolve) => {
     const process = spawn(cmd, {
-      cwd: projectRootPath,
+      cwd: ROOT_PATH,
       shell: true,
     });
 
@@ -40,7 +39,7 @@ export const judge = async (
 
   await createJudgingFile(path, data);
 
-  const tsNodeRelativePath = join('.', 'node_modules', '.bin', 'ts-node');
+  const tsNodeRelativePath = join(ROOT_PATH, 'node_modules', '.bin', 'ts-node');
   const cmd = `${tsNodeRelativePath} ${path}`;
 
   const result = await judgeFile(cmd);
