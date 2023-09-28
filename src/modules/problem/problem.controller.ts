@@ -110,9 +110,12 @@ export class ProblemController {
   }
 
   @ApiProblemSubmitStatus()
-  @Get('submit/status')
-  async getSubmitCodeStatus(@Query() query: JudgeInfo) {
-    const { submitCodeId, type } = query;
+  @Get('submit/status/:id')
+  async getSubmitCodeStatus(
+    @Query() query: JudgeInfo,
+    @Param('id') submitCodeId: number,
+  ) {
+    const { type } = query;
 
     const judgeStatus = await this.problemService.getSubmitCodeStatus(
       submitCodeId,
@@ -125,6 +128,9 @@ export class ProblemController {
       );
     }
 
-    return responseTemplate('', { judgeStatus });
+    return responseTemplate(
+      '해당 채점 내역에 대한 상태를 성공적으로 조회했습니다.',
+      { judgeStatus },
+    );
   }
 }
