@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { AppModule } from '@/app.module';
+import { HttpStatus } from '@nestjs/common';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication;
@@ -15,18 +16,15 @@ describe('AppController (e2e)', () => {
     await app.init();
   });
 
-  it('/ (GET)', () => {
+  it('올바르지 않은 타입의 문제 ID로 상세정보를 요청 할 경우 Bad Request 상태코드를 반환', () => {
     return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+      .get('/problem/detail/abc')
+      .expect(HttpStatus.BAD_REQUEST);
   });
 
-  it('/problem/detail/{wrong id} (GET)', () => {
-    return request(app.getHttpServer()).get('/problem/detail/abc').expect(400);
-  });
-
-  it('/problem/detail/{non exist id} (GET)', () => {
-    return request(app.getHttpServer()).get('/problem/detail/-1').expect(400);
+  it('없는 문제의 상세정보를 요청 할 경우 Bad Request 상태코드를 반환', () => {
+    return request(app.getHttpServer())
+      .get('/problem/detail/-1')
+      .expect(HttpStatus.BAD_REQUEST);
   });
 });
