@@ -1,4 +1,4 @@
-import { TestCase } from '@/models/entity';
+import { TestCase } from '@/models/entities';
 import type { EntityManager } from 'typeorm';
 
 export const createCorrectTestCases = async (
