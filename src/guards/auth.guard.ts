@@ -5,13 +5,16 @@ import {
   UnauthorizedException,
   BadRequestException,
 } from '@nestjs/common';
-import type { Response, Request } from 'express';
 import { Middleware, Req, Auth } from '@/decorators';
 import { tokenService } from '@/utils/token.service';
+import type { Response, Request } from 'express';
 
 class ValidationMiddlewars {
-  @Middleware
-  verifyUser(@Auth('Bearer') accessToken: string, @Req req: Request): boolean {
+  @Middleware()
+  verifyUser(
+    @Auth('Bearer') accessToken: string,
+    @Req() req: Request,
+  ): boolean {
     const decoded = tokenService.decodeToken(accessToken);
 
     if (!decoded) {
