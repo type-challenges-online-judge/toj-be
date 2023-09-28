@@ -6,7 +6,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { Middleware, Req, Auth } from '@/decorators';
-import { tokenService } from '@/utils/token.service';
+import { tokenService } from '@/utils';
 import type { Response, Request } from 'express';
 
 class ValidationMiddlewars {

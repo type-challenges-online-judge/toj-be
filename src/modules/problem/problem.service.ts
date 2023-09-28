@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
-import { judge } from '@/utils/judge';
+import { judge } from '@/utils';
 import { JudgeStatus } from './dto/judgeStatus.dto';
 
 export const enum SCORE_STATE {

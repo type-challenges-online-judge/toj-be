@@ -1,14 +1,5 @@
-import { Base64 } from 'js-base64';
-
-export * from './type-challenges';
-
-export const responseTemplate = (message: string, data: unknown) => {
-  return {
-    message,
-    data,
-  };
-};
-
-export const decodeBase64UTF8 = (string) => {
-  return Base64.decode(string.replaceAll('\n', ''));
-};
+export * from './types';
+export * from './judge';
+export * from './token';
+export * from './template';
+export * from './string';
