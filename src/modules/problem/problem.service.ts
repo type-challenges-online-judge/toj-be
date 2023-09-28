@@ -6,10 +6,11 @@ import { judge } from '@/utils';
 import { JudgeStatus } from './dto/judgeStatus.dto';
 
 export const enum SCORE_STATE {
-  NOT_EXIST = -5,
-  ERROR = -4,
-  WAITING = -3,
-  PROGRESSING = -2,
+  NOT_EXIST = -6,
+  ERROR = -5,
+  WAITING = -4,
+  PROGRESSING = -3,
+  COMPLETE = -2,
   DONE = -1,
 }
 
@@ -104,26 +105,49 @@ export class ProblemService {
   }
 
   private recordJudgeStatus(submitCodeId: number, submitCode: SubmitCode) {
-    return (
-      state: SCORE_STATE,
-      options: {
-        type?: TEST_CASE_TYPE;
-        currentTestCase?: number;
-        totalTestCaseLength?: number;
-        score?: number;
-      } = {},
-    ) => {
+    return ({
+      state,
+      type,
+      currentTestCase,
+      totalTestCaseLength,
+      score,
+    }: {
+      state: SCORE_STATE;
+      type?: TEST_CASE_TYPE;
+      currentTestCase?: number;
+      totalTestCaseLength?: number;
+      score?: number;
+    }) => {
+      if (state === SCORE_STATE.DONE && score) {
+        state = score;
+      }
+
+      if (state !== SCORE_STATE.COMPLETE) {
+        switch (type) {
+          case TEST_CASE_TYPE.CORRECT:
+            submitCode.correct_score = state;
+            break;
+
+          case TEST_CASE_TYPE.VALID:
+            submitCode.valid_score = state;
+            break;
+
+          default:
+            submitCode.correct_score = submitCode.valid_score = state;
+            break;
+        }
+      }
+
+      this.submitCodeRepo.save(submitCode);
+
       switch (state) {
-        case SCORE_STATE.PROGRESSING:
         case SCORE_STATE.ERROR:
-          submitCode.correct_score = submitCode.valid_score = state;
-
-          this.submitCodeRepo.save(submitCode);
-
+        case SCORE_STATE.PROGRESSING:
           this.testCaseStatus.set(
             this.createJudgeStatusKey(submitCodeId, TEST_CASE_TYPE.CORRECT),
             new JudgeStatus({ state }),
           );
+
           this.testCaseStatus.set(
             this.createJudgeStatusKey(submitCodeId, TEST_CASE_TYPE.VALID),
             new JudgeStatus({ state }),
@@ -131,34 +155,30 @@ export class ProblemService {
 
           break;
 
-        case SCORE_STATE.NOT_EXIST:
-          if (options.type === TEST_CASE_TYPE.CORRECT) {
-            submitCode.correct_score = state;
-          } else if (options.type === TEST_CASE_TYPE.VALID) {
-            submitCode.valid_score = state;
-          }
-
-          this.submitCodeRepo.save(submitCode);
-
+        case SCORE_STATE.COMPLETE:
           this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, options.type),
+            this.createJudgeStatusKey(submitCodeId, type),
+            new JudgeStatus({
+              state,
+              currentTestCase,
+              totalTestCaseLength,
+            }),
+          );
+
+          break;
+
+        case SCORE_STATE.NOT_EXIST:
+          this.testCaseStatus.set(
+            this.createJudgeStatusKey(submitCodeId, type),
             new JudgeStatus({ state }),
           );
 
           break;
 
         case SCORE_STATE.DONE:
-          if (options.type === TEST_CASE_TYPE.CORRECT) {
-            submitCode.correct_score = options.score;
-          } else if (options.type === TEST_CASE_TYPE.VALID) {
-            submitCode.valid_score = options.score;
-          }
-
-          this.submitCodeRepo.save(submitCode);
-
           this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, options.type),
-            new JudgeStatus({ state, score: options.score }),
+            this.createJudgeStatusKey(submitCodeId, type),
+            new JudgeStatus({ state, score: score }),
           );
 
           break;
@@ -207,11 +227,11 @@ export class ProblemService {
     );
 
     if (noDuplicateIdentifier) {
-      recordJudgeStatus(SCORE_STATE.ERROR);
+      recordJudgeStatus({ state: SCORE_STATE.ERROR });
       return;
     }
 
-    recordJudgeStatus(SCORE_STATE.PROGRESSING);
+    recordJudgeStatus({ state: SCORE_STATE.PROGRESSING });
 
     /**
      * 테스트케이스 분리
@@ -219,13 +239,15 @@ export class ProblemService {
     const correctTestCases = [];
     const validTestCases = [];
 
-    testCases.forEach((testcase) => {
-      switch (testcase.type) {
-        case 'correct':
-          correctTestCases.push(testcase);
+    testCases.forEach((testCase) => {
+      const { type } = testCase;
+
+      switch (type) {
+        case TEST_CASE_TYPE.CORRECT:
+          correctTestCases.push(testCase);
           break;
-        case 'valid':
-          validTestCases.push(testcase);
+        case TEST_CASE_TYPE.VALID:
+          validTestCases.push(testCase);
           break;
       }
     });
@@ -234,7 +256,8 @@ export class ProblemService {
      * 정확성 테스트케이스 채점 진행
      */
     if (correctTestCases.length === 0) {
-      recordJudgeStatus(SCORE_STATE.NOT_EXIST, {
+      recordJudgeStatus({
+        state: SCORE_STATE.NOT_EXIST,
         type: TEST_CASE_TYPE.CORRECT,
       });
     } else {
@@ -243,7 +266,8 @@ export class ProblemService {
       for (let i = 0; i < correctTestCases.length; i++) {
         const testCase = correctTestCases[i];
 
-        recordJudgeStatus(SCORE_STATE.PROGRESSING, {
+        recordJudgeStatus({
+          state: SCORE_STATE.COMPLETE,
           type: TEST_CASE_TYPE.CORRECT,
           currentTestCase: i + 1,
           totalTestCaseLength: correctTestCases.length,
@@ -267,7 +291,8 @@ export class ProblemService {
         ((correctCount / correctTestCases.length) * 100).toFixed(1),
       );
 
-      recordJudgeStatus(SCORE_STATE.DONE, {
+      recordJudgeStatus({
+        state: SCORE_STATE.DONE,
         type: TEST_CASE_TYPE.CORRECT,
         score: correctScore,
       });
@@ -277,7 +302,8 @@ export class ProblemService {
      * 유효성 테스트케이스 채점 진행
      */
     if (validTestCases.length === 0) {
-      recordJudgeStatus(SCORE_STATE.NOT_EXIST, {
+      recordJudgeStatus({
+        state: SCORE_STATE.NOT_EXIST,
         type: TEST_CASE_TYPE.VALID,
       });
     } else {
@@ -286,7 +312,8 @@ export class ProblemService {
       for (let i = 0; i < validTestCases.length; i++) {
         const testCase = validTestCases[i];
 
-        recordJudgeStatus(SCORE_STATE.PROGRESSING, {
+        recordJudgeStatus({
+          state: SCORE_STATE.COMPLETE,
           type: TEST_CASE_TYPE.VALID,
           currentTestCase: i + 1,
           totalTestCaseLength: validTestCases.length,
@@ -310,7 +337,8 @@ export class ProblemService {
         ((validCount / validTestCases.length) * 100).toFixed(1),
       );
 
-      recordJudgeStatus(SCORE_STATE.DONE, {
+      recordJudgeStatus({
+        state: SCORE_STATE.DONE,
         type: TEST_CASE_TYPE.VALID,
         score: validScore,
       });
