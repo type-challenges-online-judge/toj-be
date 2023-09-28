@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { User, SubmitCode, Problem, TestCase } from '@/models/entity';
 import { configService } from '@/config/config.service';
+import { join } from 'path';
 import type { DataSourceOptions } from 'typeorm';
 
 export const dataSourceOptions: DataSourceOptions = {
@@ -14,7 +15,7 @@ export const dataSourceOptions: DataSourceOptions = {
   synchronize: !configService.isProduction(),
   logging: !configService.isProduction(),
   entities: [User, SubmitCode, Problem, TestCase],
-  migrations: ['src/models/migrations/*.ts'],
+  migrations: [join(__dirname, 'src', 'models', 'migrations', '*.ts')],
   subscribers: [],
 };
 
