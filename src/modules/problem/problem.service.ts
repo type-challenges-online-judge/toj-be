@@ -4,8 +4,8 @@ import { Repository } from 'typeorm';
 import { Problem, SubmitCode, TestCase, User } from '@/models/entities';
 import {
   judge,
-  createJudgeRecordFunction,
-  createJudgeStatusKey,
+  createRecordJudgeStatusFn,
+  createKeyOfJudgeStatus,
 } from '@/utils';
 import { TEST_CASE_TYPE, SCORE_STATE } from '@/constants';
 import { JudgeStatus } from '@/types/judge';
@@ -116,7 +116,7 @@ export class ProblemService {
       .where(`test_case.problemId = ${problemId}`)
       .getMany();
 
-    const recordJudgeStatus = createJudgeRecordFunction(
+    const recordJudgeStatus = createRecordJudgeStatusFn(
       submitCodeId,
       submitCode,
       this.submitCodeRepo,
@@ -259,6 +259,6 @@ export class ProblemService {
     submitCodeId: number,
     type: TEST_CASE_TYPE,
   ): Promise<JudgeStatus | undefined> {
-    return this.testCaseStatus.get(createJudgeStatusKey(submitCodeId, type));
+    return this.testCaseStatus.get(createKeyOfJudgeStatus(submitCodeId, type));
   }
 }

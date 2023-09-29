@@ -31,7 +31,7 @@ const judgeFile = (cmd: string): Promise<boolean> => {
   });
 };
 
-export const createJudgeStatusKey = (
+export const createKeyOfJudgeStatus = (
   submitCodeId: number,
   type: TEST_CASE_TYPE,
 ): string => `${submitCodeId}|${type}`;
@@ -55,7 +55,7 @@ export const judge = async (
   return result;
 };
 
-export const createJudgeRecordFunction =
+export const createRecordJudgeStatusFn =
   (
     submitCodeId: number,
     submitCode: SubmitCode,
@@ -105,19 +105,19 @@ export const createJudgeRecordFunction =
       case SCORE_STATE.ERROR:
       case SCORE_STATE.PROGRESSING:
         testCaseStatus.set(
-          createJudgeStatusKey(submitCodeId, TEST_CASE_TYPE.CORRECT),
+          createKeyOfJudgeStatus(submitCodeId, TEST_CASE_TYPE.CORRECT),
           { state },
         );
 
         testCaseStatus.set(
-          createJudgeStatusKey(submitCodeId, TEST_CASE_TYPE.VALID),
+          createKeyOfJudgeStatus(submitCodeId, TEST_CASE_TYPE.VALID),
           { state },
         );
 
         break;
 
       case SCORE_STATE.COMPLETE:
-        testCaseStatus.set(createJudgeStatusKey(submitCodeId, type), {
+        testCaseStatus.set(createKeyOfJudgeStatus(submitCodeId, type), {
           state,
           currentTestCase,
           totalTestCaseLength,
@@ -126,12 +126,14 @@ export const createJudgeRecordFunction =
         break;
 
       case SCORE_STATE.NOT_EXIST:
-        testCaseStatus.set(createJudgeStatusKey(submitCodeId, type), { state });
+        testCaseStatus.set(createKeyOfJudgeStatus(submitCodeId, type), {
+          state,
+        });
 
         break;
 
       case SCORE_STATE.DONE:
-        testCaseStatus.set(createJudgeStatusKey(submitCodeId, type), {
+        testCaseStatus.set(createKeyOfJudgeStatus(submitCodeId, type), {
           state,
           score,
         });
