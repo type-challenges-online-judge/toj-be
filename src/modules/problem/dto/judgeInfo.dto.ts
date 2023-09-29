@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { TEST_CASE_TYPE } from '../problem.service';
+import { TEST_CASE_TYPE } from '@/constants';
 
 export class JudgeInfo {
   @ApiProperty({

@@ -1,23 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Problem, SubmitCode, TestCase, User } from '@/models/entities';
 import { Repository } from 'typeorm';
-import { judge } from '@/utils';
-import { JudgeStatus } from './dto/judgeStatus.dto';
-
-export const enum SCORE_STATE {
-  NOT_EXIST = -6,
-  ERROR = -5,
-  WAITING = -4,
-  PROGRESSING = -3,
-  COMPLETE = -2,
-  DONE = -1,
-}
-
-export const enum TEST_CASE_TYPE {
-  CORRECT = 'CORRECT',
-  VALID = 'VALID',
-}
+import { Problem, SubmitCode, TestCase, User } from '@/models/entities';
+import {
+  judge,
+  createJudgeRecordFunction,
+  createJudgeStatusKey,
+} from '@/utils';
+import { TEST_CASE_TYPE, SCORE_STATE } from '@/constants';
+import { JudgeStatus } from '@/types/judge';
 
 @Injectable()
 export class ProblemService {
@@ -39,7 +30,7 @@ export class ProblemService {
    *
    * TODO: 당장은 비효율적이더라도 변수에 관리하지만, 추후 redis와 같은 캐시 DB로 이주시킬 예정
    */
-  testCaseStatus: Map<string, JudgeStatus> = new Map();
+  private testCaseStatus: Map<string, JudgeStatus> = new Map();
 
   /**
    * 문제 리스트 조회 메서드
@@ -97,95 +88,6 @@ export class ProblemService {
     return submitCodeHistory.identifiers[0].id;
   }
 
-  private createJudgeStatusKey(
-    submitCodeId: number,
-    type: TEST_CASE_TYPE,
-  ): string {
-    return `${submitCodeId}|${type}`;
-  }
-
-  private recordJudgeStatus(submitCodeId: number, submitCode: SubmitCode) {
-    return ({
-      state,
-      type,
-      currentTestCase,
-      totalTestCaseLength,
-      score,
-    }: {
-      state: SCORE_STATE;
-      type?: TEST_CASE_TYPE;
-      currentTestCase?: number;
-      totalTestCaseLength?: number;
-      score?: number;
-    }) => {
-      if (state === SCORE_STATE.DONE && score) {
-        state = score;
-      }
-
-      if (state !== SCORE_STATE.COMPLETE) {
-        switch (type) {
-          case TEST_CASE_TYPE.CORRECT:
-            submitCode.correct_score = state;
-            break;
-
-          case TEST_CASE_TYPE.VALID:
-            submitCode.valid_score = state;
-            break;
-
-          default:
-            submitCode.correct_score = submitCode.valid_score = state;
-            break;
-        }
-      }
-
-      this.submitCodeRepo.save(submitCode);
-
-      switch (state) {
-        case SCORE_STATE.ERROR:
-        case SCORE_STATE.PROGRESSING:
-          this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, TEST_CASE_TYPE.CORRECT),
-            new JudgeStatus({ state }),
-          );
-
-          this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, TEST_CASE_TYPE.VALID),
-            new JudgeStatus({ state }),
-          );
-
-          break;
-
-        case SCORE_STATE.COMPLETE:
-          this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, type),
-            new JudgeStatus({
-              state,
-              currentTestCase,
-              totalTestCaseLength,
-            }),
-          );
-
-          break;
-
-        case SCORE_STATE.NOT_EXIST:
-          this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, type),
-            new JudgeStatus({ state }),
-          );
-
-          break;
-
-        case SCORE_STATE.DONE:
-          this.testCaseStatus.set(
-            this.createJudgeStatusKey(submitCodeId, type),
-            new JudgeStatus({ state, score: score }),
-          );
-
-          break;
-      }
-    };
-  }
-
   /**
    * 채점 메서드
    */
@@ -214,7 +116,12 @@ export class ProblemService {
       .where(`test_case.problemId = ${problemId}`)
       .getMany();
 
-    const recordJudgeStatus = this.recordJudgeStatus(submitCodeId, submitCode);
+    const recordJudgeStatus = createJudgeRecordFunction(
+      submitCodeId,
+      submitCode,
+      this.submitCodeRepo,
+      this.testCaseStatus,
+    );
 
     /**
      * 템플릿에 적힌 타입을 사용해서 정답을 제출하지 않았을 경우 에러처리
@@ -352,8 +259,6 @@ export class ProblemService {
     submitCodeId: number,
     type: TEST_CASE_TYPE,
   ): Promise<JudgeStatus | undefined> {
-    return this.testCaseStatus.get(
-      this.createJudgeStatusKey(submitCodeId, type),
-    );
+    return this.testCaseStatus.get(createJudgeStatusKey(submitCodeId, type));
   }
 }
