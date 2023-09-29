@@ -21,8 +21,7 @@ const judgeFile = (cmd: string): Promise<boolean> => {
       shell: true,
     });
 
-    process.stderr.on('data', (data) => {
-      console.log('data', data.toString('utf-8'));
+    process.stderr.on('data', () => {
       resolve(false);
     });
 
