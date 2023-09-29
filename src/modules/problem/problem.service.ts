@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Problem, SubmitCode, TestCase, User } from '@/models/entity';
 import { Repository } from 'typeorm';
-import { judge } from '@/utils/judge';
-import { JudgeStatus } from './dto/judgeStatus.dto';
-
-export const enum SCORE_STATE {
-  NOT_EXIST = -5,
-  ERROR = -4,
-  WAITING = -3,
-  PROGRESSING = -2,
-  DONE = -1,
-}
+import { Problem, SubmitCode, TestCase, User } from '@/models/entities';
+import {
+  judge,
+  createRecordJudgeStatusFn,
+  createKeyOfJudgeStatus,
+} from '@/utils';
+import { TEST_CASE_TYPE, SCORE_STATE } from '@/constants';
+import { JudgeStatus } from '@/types/judge';
 
 @Injectable()
 export class ProblemService {
@@ -27,12 +24,13 @@ export class ProblemService {
   ) {}
 
   /**
-   * 제출 내역 id를 키로, 채점 현황을 값으로 저장하는 Map 객체
+   * [Map 객체]
+   * key: `${제출 코드 id}|${타입}`
+   * value: 채점 현황 객체 (JudgeStatus)
    *
    * TODO: 당장은 비효율적이더라도 변수에 관리하지만, 추후 redis와 같은 캐시 DB로 이주시킬 예정
    */
-  correctTestCaseStatus: Map<number, JudgeStatus> = new Map();
-  validTestCaseStatus: Map<number, JudgeStatus> = new Map();
+  private testCaseStatus: Map<string, JudgeStatus> = new Map();
 
   /**
    * 문제 리스트 조회 메서드
@@ -94,12 +92,11 @@ export class ProblemService {
    * 채점 메서드
    */
   public async startJudge(
-    userId: number,
     problemId: number,
     submitCodeId: number,
-    submitCode: string,
+    submitCodeContent: string,
   ): Promise<void> {
-    let caseNum = 0;
+    let testCaseNumber = 0;
 
     const problem = await this.problemRepo.findOne({
       where: {
@@ -107,7 +104,7 @@ export class ProblemService {
       },
     });
 
-    const submitCodeHistory = await this.submitCodeRepo.findOne({
+    const submitCode = await this.submitCodeRepo.findOne({
       where: {
         id: submitCodeId,
       },
@@ -119,49 +116,29 @@ export class ProblemService {
       .where(`test_case.problemId = ${problemId}`)
       .getMany();
 
+    const recordJudgeStatus = createRecordJudgeStatusFn(
+      submitCodeId,
+      submitCode,
+      this.submitCodeRepo,
+      this.testCaseStatus,
+    );
+
     /**
      * 템플릿에 적힌 타입을 사용해서 정답을 제출하지 않았을 경우 에러처리
      */
     const noDuplicateIdentifier = await judge(
       submitCodeId,
-      submitCode,
-      caseNum,
+      submitCodeContent,
+      testCaseNumber,
       problem.template,
     );
 
     if (noDuplicateIdentifier) {
-      submitCodeHistory.correct_score = SCORE_STATE.ERROR;
-      submitCodeHistory.valid_score = SCORE_STATE.ERROR;
-
-      this.submitCodeRepo.save(submitCodeHistory);
-
-      this.correctTestCaseStatus.set(
-        submitCodeId,
-        new JudgeStatus({ state: SCORE_STATE.ERROR }),
-      );
-
-      this.validTestCaseStatus.set(
-        submitCodeId,
-        new JudgeStatus({ state: SCORE_STATE.ERROR }),
-      );
-
+      recordJudgeStatus({ state: SCORE_STATE.ERROR });
       return;
     }
 
-    submitCodeHistory.correct_score = SCORE_STATE.PROGRESSING;
-    submitCodeHistory.valid_score = SCORE_STATE.PROGRESSING;
-
-    this.submitCodeRepo.save(submitCodeHistory);
-
-    this.correctTestCaseStatus.set(
-      submitCodeId,
-      new JudgeStatus({ state: SCORE_STATE.PROGRESSING }),
-    );
-
-    this.validTestCaseStatus.set(
-      submitCodeId,
-      new JudgeStatus({ state: SCORE_STATE.PROGRESSING }),
-    );
+    recordJudgeStatus({ state: SCORE_STATE.PROGRESSING });
 
     /**
      * 테스트케이스 분리
@@ -169,13 +146,15 @@ export class ProblemService {
     const correctTestCases = [];
     const validTestCases = [];
 
-    testCases.forEach((testcase) => {
-      switch (testcase.type) {
-        case 'correct':
-          correctTestCases.push(testcase);
+    testCases.forEach((testCase) => {
+      const { type } = testCase;
+
+      switch (type) {
+        case TEST_CASE_TYPE.CORRECT:
+          correctTestCases.push(testCase);
           break;
-        case 'valid':
-          validTestCases.push(testcase);
+        case TEST_CASE_TYPE.VALID:
+          validTestCases.push(testCase);
           break;
       }
     });
@@ -184,35 +163,29 @@ export class ProblemService {
      * 정확성 테스트케이스 채점 진행
      */
     if (correctTestCases.length === 0) {
-      submitCodeHistory.correct_score = SCORE_STATE.NOT_EXIST;
-
-      this.submitCodeRepo.save(submitCodeHistory);
-
-      this.correctTestCaseStatus.set(
-        submitCodeId,
-        new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
-      );
+      recordJudgeStatus({
+        state: SCORE_STATE.NOT_EXIST,
+        type: TEST_CASE_TYPE.CORRECT,
+      });
     } else {
       let correctCount = 0;
 
       for (let i = 0; i < correctTestCases.length; i++) {
         const testCase = correctTestCases[i];
 
-        this.correctTestCaseStatus.set(
-          submitCodeId,
-          new JudgeStatus({
-            state: SCORE_STATE.PROGRESSING,
-            currentTestCase: i,
-            totalTestCaseLength: correctTestCases.length,
-          }),
-        );
+        recordJudgeStatus({
+          state: SCORE_STATE.COMPLETE,
+          type: TEST_CASE_TYPE.CORRECT,
+          currentTestCase: i + 1,
+          totalTestCaseLength: correctTestCases.length,
+        });
 
         const { template } = testCase;
 
         const result = await judge(
           submitCodeId,
-          submitCode,
-          ++caseNum,
+          submitCodeContent,
+          ++testCaseNumber,
           template,
         );
 
@@ -225,52 +198,40 @@ export class ProblemService {
         ((correctCount / correctTestCases.length) * 100).toFixed(1),
       );
 
-      submitCodeHistory.correct_score = correctScore;
-
-      this.submitCodeRepo.save(submitCodeHistory);
-
-      this.correctTestCaseStatus.set(
-        submitCodeId,
-        new JudgeStatus({
-          state: SCORE_STATE.DONE,
-          score: correctScore,
-        }),
-      );
+      recordJudgeStatus({
+        state: SCORE_STATE.DONE,
+        type: TEST_CASE_TYPE.CORRECT,
+        score: correctScore,
+      });
     }
 
     /**
      * 유효성 테스트케이스 채점 진행
      */
     if (validTestCases.length === 0) {
-      submitCodeHistory.valid_score = SCORE_STATE.NOT_EXIST;
-
-      this.submitCodeRepo.save(submitCodeHistory);
-
-      this.validTestCaseStatus.set(
-        submitCodeId,
-        new JudgeStatus({ state: SCORE_STATE.NOT_EXIST }),
-      );
+      recordJudgeStatus({
+        state: SCORE_STATE.NOT_EXIST,
+        type: TEST_CASE_TYPE.VALID,
+      });
     } else {
       let validCount = 0;
 
       for (let i = 0; i < validTestCases.length; i++) {
         const testCase = validTestCases[i];
 
-        this.validTestCaseStatus.set(
-          submitCodeId,
-          new JudgeStatus({
-            state: SCORE_STATE.PROGRESSING,
-            currentTestCase: i,
-            totalTestCaseLength: validTestCases.length,
-          }),
-        );
+        recordJudgeStatus({
+          state: SCORE_STATE.COMPLETE,
+          type: TEST_CASE_TYPE.VALID,
+          currentTestCase: i + 1,
+          totalTestCaseLength: validTestCases.length,
+        });
 
         const { template } = testCase;
 
         const result = await judge(
           submitCodeId,
-          submitCode,
-          ++caseNum,
+          submitCodeContent,
+          ++testCaseNumber,
           template,
         );
 
@@ -283,32 +244,21 @@ export class ProblemService {
         ((validCount / validTestCases.length) * 100).toFixed(1),
       );
 
-      submitCodeHistory.valid_score = validScore;
-
-      this.submitCodeRepo.save(submitCodeHistory);
-
-      this.validTestCaseStatus.set(
-        submitCodeId,
-        new JudgeStatus({
-          state: SCORE_STATE.DONE,
-          score: validScore,
-        }),
-      );
+      recordJudgeStatus({
+        state: SCORE_STATE.DONE,
+        type: TEST_CASE_TYPE.VALID,
+        score: validScore,
+      });
     }
   }
 
   /**
-   *
+   * 현재 채점중인 코드의 상태 조회 메서드
    */
   async getSubmitCodeStatus(
     submitCodeId: number,
-    type: 'correct' | 'valid',
+    type: TEST_CASE_TYPE,
   ): Promise<JudgeStatus | undefined> {
-    switch (type) {
-      case 'correct':
-        return this.correctTestCaseStatus.get(submitCodeId);
-      case 'valid':
-        return this.validTestCaseStatus.get(submitCodeId);
-    }
+    return this.testCaseStatus.get(createKeyOfJudgeStatus(submitCodeId, type));
   }
 }

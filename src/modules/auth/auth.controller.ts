@@ -1,52 +1,17 @@
 import { Controller, Get, Post, Query, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import {
-  ApiBadRequestResponse,
-  ApiCreatedResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiQuery,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { ApiTags } from '@nestjs/swagger';
 import { responseTemplate } from '@/utils';
-import { AuthGuard, ReverseAuthGuard } from '@/guards/auth.guard';
+import { AuthGuard, ReverseAuthGuard } from '@/guards';
+import { ApiLogin, ApiLogout } from './swagger';
 import type { Response } from 'express';
-import { configService } from '@/config/config.service';
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  /**
-   * 로그인 API
-   */
-  @ApiCreatedResponse({
-    description:
-      '로그인(회원가입)이 성공적으로 수행되었을 경우 `accessToken`을 반환합니다.',
-    schema: {
-      example: {
-        message: '로그인 인증을 위한 Access Token이 성공적으로 발급되었습니다.',
-        data: {
-          accessToken: '{access token}',
-        },
-      },
-    },
-  })
-  @ApiBadRequestResponse({
-    description:
-      '이미 로그인 된 상태이거나, Authorization Code가 올바르지 않습니다.',
-  })
-  @ApiOperation({
-    summary: 'Github OAuth를 이용한 로그인(회원가입)을 수행합니다.',
-    description: `Github OAuth 🔗 : [[이동]](https://github.com/login/oauth/authorize?client_id=${configService.GITHUB_OAUTH_CLIENT_ID})`,
-  })
-  @ApiQuery({
-    name: 'code',
-    required: true,
-    description: 'Github OAuth의 Authorization Code',
-  })
+  @ApiLogin()
   @UseGuards(ReverseAuthGuard)
   @Post('login')
   async login(@Query('code') code: string) {
@@ -74,22 +39,12 @@ export class AuthController {
   }
 
   /**
-   * 로그아웃 API
-   *
-   * 로그인 인증을 위한 accessToken을 쿠키에 저장하여 관리하던 방식에서, Authorization 헤더에 저장하도록 변경되면서 해당 API를 사용하지 않도록 처리함.
+   * 로그인 인증을 위한 accessToken을 쿠키에 저장하여 관리하던 방식에서,
+   * Authorization 헤더에 저장하도록 변경되면서 해당 API를 사용하지 않도록 처리함.
    */
-  @ApiOkResponse({
-    description: '성공적으로 로그아웃 되었습니다.',
-  })
-  @ApiUnauthorizedResponse({
-    description: '로그인 되어있지 않습니다.',
-  })
-  @ApiOperation({
-    summary: '로그인 인증에 사용되는 accessToken 쿠키를 삭제합니다.',
-    deprecated: true,
-  })
-  @Get('logout')
+  @ApiLogout()
   @UseGuards(AuthGuard)
+  @Get('logout')
   async logout(@Res() res: Response) {
     res.cookie('accessToken', '', {
       maxAge: 0,

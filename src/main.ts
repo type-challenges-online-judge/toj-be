@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '@/app.module';
-import { BaseAPIDocument } from './swagger.document';
+import { DocumentBuilder } from '@nestjs/swagger';
 import { SwaggerModule } from '@nestjs/swagger';
 import { ProblemModule } from './modules/problem/problem.module';
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
@@ -44,7 +44,12 @@ async function bootstrap() {
   /**
    * swagger 관련 설정
    */
-  const config = new BaseAPIDocument().initializeOptions();
+  const config = new DocumentBuilder()
+    .setTitle('TOJ API Spec')
+    .setDescription('Type-challenges Online Judge의 API 명세입니다.')
+    .setVersion('0.0.1')
+    .addBearerAuth()
+    .build();
   const document = SwaggerModule.createDocument(app, config, {
     include: [ProblemModule, AuthModule, UserModule],
   });
