@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryGeneratedColumn, ManyToOne } from 'typeorm';
-import { BaseEntity } from './BaseEntity';
-import { Problem } from './Problem';
+import { BaseEntity } from './BaseEntity.entity';
+import { Problem } from './Problem.entity';
 
 @Entity()
 export class TestCase extends BaseEntity {

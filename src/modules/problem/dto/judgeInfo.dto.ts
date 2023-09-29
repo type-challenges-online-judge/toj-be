@@ -1,18 +1,12 @@
-import { IsNumber, IsString } from 'class-validator';
+import { IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { TEST_CASE_TYPE } from '@/constants';
 
 export class JudgeInfo {
   @ApiProperty({
     required: true,
-    example: 1234,
-  })
-  @IsNumber()
-  submitCodeId: number;
-
-  @ApiProperty({
-    required: true,
-    example: 'correct',
+    example: TEST_CASE_TYPE.CORRECT,
   })
   @IsString()
-  type: 'correct' | 'valid';
+  type: TEST_CASE_TYPE;
 }

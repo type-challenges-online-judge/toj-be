@@ -5,47 +5,20 @@ import {
   UseGuards,
   InternalServerErrorException,
 } from '@nestjs/common';
-import { AuthGuard } from '@/guards/auth.guard';
-import {
-  ApiBearerAuth,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from '@nestjs/swagger';
+import { AuthGuard } from '@/guards';
+import { ApiTags } from '@nestjs/swagger';
 import { UserService } from './user.service';
 import type { Request } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
 import { responseTemplate } from '@/utils';
+import { ApiUserInfo } from './swagger';
 
 @ApiTags('user')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  /**
-   * 로그인 된 사용자 정보 제공 API
-   */
-  @ApiOperation({
-    summary: '현재 로그인 된 사용자의 정보를 제공하는 API입니다.',
-  })
-  @ApiOkResponse({
-    description: '로그인 된 사용자의 정보를 성공적으로 조회했습니다.',
-    schema: {
-      example: {
-        message: '성공적으로 사용자 정보를 조회했습니다.',
-        data: {
-          snsId: 1234567890,
-          name: '{user name}',
-          profileUrl: '{user github profile url}',
-        },
-      },
-    },
-  })
-  @ApiUnauthorizedResponse({
-    description: '로그인이 되어있지 않은 상태입니다.',
-  })
-  @ApiBearerAuth()
+  @ApiUserInfo()
   @UseGuards(AuthGuard)
   @Get('info')
   async getUserInfo(@Req() req: Request) {
