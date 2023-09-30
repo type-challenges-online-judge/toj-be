@@ -1,27 +1,8 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Get,
-  Param,
-  Post,
-  Req,
-  UseGuards,
-  Query,
-} from '@nestjs/common';
+import { BadRequestException, Controller, Get, Param } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { SubmittedCode } from './dto/submittedCode.dto';
 import { ProblemService } from './problem.service';
 import { responseTemplate } from '@/utils';
-import { AuthGuard } from '@/guards';
-import type { Request } from 'express';
-import { JudgeInfo } from './dto/judgeInfo.dto';
-import {
-  ApiProblem,
-  ApiProblemDetail,
-  ApiProblemSubmit,
-  ApiProblemSubmitStatus,
-} from './swagger';
+import { ApiProblem, ApiProblemDetail } from './swagger';
 
 @ApiTags('problem')
 @Controller('problem')
@@ -60,66 +41,6 @@ export class ProblemController {
     return responseTemplate(
       '성공적으로 문제의 상세정보를 조회했습니다.',
       problemDetail,
-    );
-  }
-
-  @ApiProblemSubmit()
-  @UseGuards(AuthGuard)
-  @Post('submit/:id')
-  async submitCode(
-    @Req() req: Request,
-    @Param('id') problemId: number,
-    @Body() data: SubmittedCode,
-  ) {
-    const { code } = data;
-
-    const { snsId } = req['user'];
-
-    /**
-     * 제출 내역 생성
-     */
-    const submitCodeId = await this.problemService.createSubmitHistory(
-      snsId,
-      problemId,
-      code,
-    );
-
-    /**
-     * 비동기로 채점 시작
-     */
-    try {
-      this.problemService.startJudge(problemId, submitCodeId, code);
-    } catch (e) {
-      console.log(e);
-    }
-
-    return responseTemplate('정답 제출이 완료되어 채점이 시작되었습니다.', {
-      submitCodeId,
-    });
-  }
-
-  @ApiProblemSubmitStatus()
-  @Get('submit/status/:id')
-  async getSubmitCodeStatus(
-    @Query() query: JudgeInfo,
-    @Param('id') submitCodeId: number,
-  ) {
-    const { type } = query;
-
-    const judgeStatus = await this.problemService.getSubmitCodeStatus(
-      submitCodeId,
-      type,
-    );
-
-    if (!judgeStatus) {
-      throw new BadRequestException(
-        '`correct`, `valid`가 아닌 다른 다른 타입을 요청하였거나, 해당 제출 코드에 대한 채점 내역이 없습니다.',
-      );
-    }
-
-    return responseTemplate(
-      '해당 채점 내역에 대한 상태를 성공적으로 조회했습니다.',
-      { judgeStatus },
     );
   }
 }

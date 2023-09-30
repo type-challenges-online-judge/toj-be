@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { judge, createRecordJudgeStatusFn, createKeyOfJudgeStatus } from '.';
 import { JudgeStatus } from '@/types/judge';
-import { SubmitCode } from '@/models/entities';
+import { SubmitCode } from '@/modules/submit/entities';
 import { Repository } from 'typeorm';
 import { SCORE_STATE, TEST_CASE_TYPE } from '@/constants';
 

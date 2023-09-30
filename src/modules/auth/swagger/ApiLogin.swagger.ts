@@ -5,7 +5,7 @@ import {
   ApiOperation,
   ApiQuery,
 } from '@nestjs/swagger';
-import { configService } from '@/config/config.service';
+import { configService } from '@/config';
 
 export const ApiLogin = () => {
   return applyDecorators(

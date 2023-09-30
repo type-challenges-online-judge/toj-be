@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-import { configService } from '@/config/config.service';
+import { configService } from '@/config';
 import { decodeBase64UTF8 } from '@/utils';
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types';
 
@@ -7,8 +7,9 @@ const octokit = new Octokit({
   auth: configService.GITHUB_PERSONAL_TOKEN,
 });
 
-export type RepositoryContentResponseDataType =
-  GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.getContent>;
+type RepositoryContentResponseDataType = GetResponseDataTypeFromEndpointMethod<
+  typeof octokit.rest.repos.getContent
+>;
 
 export const getRepoContent = async (
   path: string,
@@ -45,11 +46,13 @@ export const getProblemReadmeFile = async (
     return ret;
   }
 
-  const file = await getRepoContent(readmeFile.path);
+  /**
+   * octokit의 타입 추론에 문제가 있어 임시로 any 타입을 할당하여 사용함.
+   */
+  const file = (await getRepoContent(readmeFile.path)) as any;
 
-  // @ts-ignore
   ret.description = decodeBase64UTF8(file.content);
-  // @ts-ignore
+
   ret.language = /readme.ko.md/gi.test(file.name) ? 'ko' : 'en';
 
   return ret;
@@ -70,9 +73,11 @@ export const getProblemTemplate = async (
     return ret;
   }
 
-  const file = await getRepoContent(templateFile.path);
+  /**
+   * octokit의 타입 추론에 문제가 있어 임시로 any 타입을 할당하여 사용함.
+   */
+  const file = (await getRepoContent(templateFile.path)) as any;
 
-  // @ts-ignore
   ret = decodeBase64UTF8(file.content);
 
   return ret;
@@ -93,9 +98,11 @@ export const getProblemTestCases = async (
     return ret;
   }
 
-  const file = await getRepoContent(testCaseFile.path);
+  /**
+   * octokit의 타입 추론에 문제가 있어 임시로 any 타입을 할당하여 사용함.
+   */
+  const file = (await getRepoContent(testCaseFile.path)) as any;
 
-  // @ts-ignore
   ret = decodeBase64UTF8(file.content);
 
   return ret;

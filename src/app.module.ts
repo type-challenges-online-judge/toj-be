@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ProblemModule } from '@/modules/problem/problem.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { dataSourceOptions } from '@/models/data-source';
+import { dataSourceOptions } from '@/config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import { SubmitModule } from './modules/submit/submit.module';
