@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { dataSourceOptions } from '@/models/data-source';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
+import { SubmitModule } from './modules/submit/submit.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { UserModule } from './modules/user/user.module';
     ProblemModule,
     AuthModule,
     UserModule,
+    SubmitModule,
   ],
   controllers: [],
   providers: [],
