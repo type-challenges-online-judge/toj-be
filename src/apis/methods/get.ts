@@ -1,5 +1,5 @@
 import { Octokit } from 'octokit';
-import { configService } from '@/config/config.service';
+import { configService } from '@/config';
 import { decodeBase64UTF8 } from '@/utils';
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types';
 
@@ -7,8 +7,9 @@ const octokit = new Octokit({
   auth: configService.GITHUB_PERSONAL_TOKEN,
 });
 
-export type RepositoryContentResponseDataType =
-  GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.getContent>;
+type RepositoryContentResponseDataType = GetResponseDataTypeFromEndpointMethod<
+  typeof octokit.rest.repos.getContent
+>;
 
 export const getRepoContent = async (
   path: string,
