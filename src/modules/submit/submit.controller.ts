@@ -1,9 +1,9 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiSubmitCodeList, ApiSubmitCodeListSize } from './swagger';
 import { SubmitService } from './submit.service';
-import { AuthGuard } from '@/guards';
 import { SubmitCodePaging, SubmitCodeSearchOptions } from './dto';
+import { responseTemplate } from '@/utils';
 
 @ApiTags('submit')
 @Controller('submit')
@@ -11,16 +11,25 @@ export class SubmitController {
   constructor(private readonly submitService: SubmitService) {}
 
   @ApiSubmitCodeList()
-  @UseGuards(AuthGuard)
   @Get()
   async getSubmitCodeList(@Query() query: SubmitCodePaging) {
-    return await this.submitService.getSubmitCodeList(query);
+    const submitList = await this.submitService.getSubmitCodeList(query);
+
+    return responseTemplate(
+      '성공적으로 제출 리스트를 조회했습니다.',
+      submitList,
+    );
   }
 
   @ApiSubmitCodeListSize()
-  @UseGuards(AuthGuard)
   @Get('size')
   async getSubmitCodeListLength(@Query() query: SubmitCodeSearchOptions) {
-    return await this.submitService.getSubmitCodeListSize(query);
+    const submitListSize =
+      await this.submitService.getSubmitCodeListSize(query);
+
+    return responseTemplate(
+      '성공적으로 제출 리스트의 개수를 조회했습니다.',
+      submitListSize,
+    );
   }
 }
