@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Problem, SubmitCode, TestCase, User } from '@/models/entities';
+import { Problem } from '@/modules/problem/entities';
+import { TestCase } from '@/modules/problem/entities';
+import { SubmitCode } from '@/modules/submit/entities';
+import { User } from '@/modules/user/entities';
 import {
   judge,
   createRecordJudgeStatusFn,

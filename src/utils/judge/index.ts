@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import { join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { ROOT_PATH, TEST_CASE_TYPE, SCORE_STATE } from '@/constants';
-import { SubmitCode } from '@/models/entities';
+import { SubmitCode } from '@/modules/submit/entities';
 import { Repository } from 'typeorm';
 import { JudgeStatus } from '@/types/judge';
 

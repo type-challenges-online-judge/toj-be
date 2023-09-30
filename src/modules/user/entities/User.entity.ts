@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { BaseEntity } from './BaseEntity.entity';
-import { SubmitCode } from '.';
+import { BaseEntity } from '@/common/entities';
+import { SubmitCode } from '@/modules/submit/entities';
 
 @Entity()
 export class User extends BaseEntity {

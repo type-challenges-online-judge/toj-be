@@ -1,5 +1,5 @@
 import { AppDataSource } from '@/models/data-source';
-import { Problem } from '@/models/entities';
+import { Problem } from '@/modules/problem/entities';
 import { createCorrectTestCases, createValidTestCases } from './utils';
 import {
   getRepoContent,

@@ -1,6 +1,9 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { User, SubmitCode, Problem, TestCase } from '@/models/entities';
+import { User } from '@/modules/user/entities';
+import { SubmitCode } from '@/modules/submit/entities';
+import { Problem } from '@/modules/problem/entities';
+import { TestCase } from '@/modules/problem/entities';
 import { configService } from '@/config/config.service';
 import { join } from 'path';
 import type { DataSourceOptions } from 'typeorm';

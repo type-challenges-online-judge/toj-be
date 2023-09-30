@@ -1,4 +1,4 @@
-import { SubmitCode } from '@/models/entities';
+import { SubmitCode } from '@/modules/submit/entities';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
