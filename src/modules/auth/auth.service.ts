@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from '@/models/entities';
 import { Repository } from 'typeorm';
 import { OAuthApp } from 'octokit';
-import { configService } from '@/config/config.service';
+import { configService } from '@/config';
 import { BadRequestException } from '@nestjs/common';
 import { tokenService } from '@/utils';
+import { User } from '@/modules/user/entities';
 
 type UserInfo = {
   snsId: number;
