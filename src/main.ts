@@ -7,6 +7,7 @@ import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import cookieParser = require('cookie-parser');
+import { SubmitModule } from './modules/submit/submit.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -51,7 +52,7 @@ async function bootstrap() {
     .addBearerAuth()
     .build();
   const document = SwaggerModule.createDocument(app, config, {
-    include: [ProblemModule, AuthModule, UserModule],
+    include: [ProblemModule, AuthModule, UserModule, SubmitModule],
   });
   SwaggerModule.setup('api', app, document);
 
