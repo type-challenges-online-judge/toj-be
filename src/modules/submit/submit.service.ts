@@ -34,25 +34,34 @@ export class SubmitService {
   async getSubmitCodeList(options: SubmitCodePaging) {
     const { problemId, snsId, pageNum, countPerPage } = options;
 
-    const where: FindOptionsWhere<SubmitCode> = {};
+    const where = [];
 
-    if (problemId) {
-      where.problem = {
-        id: problemId,
-      };
+    if (!isNaN(problemId)) {
+      where.push(`problem.id = ${problemId}`);
     }
 
-    if (snsId) {
-      where.user = {
-        snsId,
-      };
+    if (!isNaN(snsId)) {
+      where.push(`user.snsId = ${snsId}`);
     }
 
-    const submitCodeList = await this.repo.find({
-      where,
-      skip: countPerPage * (pageNum - 1),
-      take: countPerPage,
-    });
+    const submitCodeList = await this.repo
+      .createQueryBuilder('submitCode')
+      .select()
+      .where(where.join(' AND '))
+      .skip(countPerPage * (pageNum - 1))
+      .take(countPerPage)
+      .leftJoin('submitCode.problem', 'problem')
+      .leftJoin('submitCode.user', 'user')
+      .addSelect([
+        'problem.id',
+        'problem.level',
+        'problem.title',
+        'problem.number',
+        'user.snsId',
+        'user.name',
+      ])
+      .orderBy('submitCode.createdAt', 'DESC')
+      .getMany();
 
     return submitCodeList;
   }
