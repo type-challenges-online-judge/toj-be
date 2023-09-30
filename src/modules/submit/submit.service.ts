@@ -54,7 +54,7 @@ export class SubmitService {
       };
     }
 
-    const length = await this.repo.findAndCount({
+    const length = await this.repo.count({
       where,
     });
 
