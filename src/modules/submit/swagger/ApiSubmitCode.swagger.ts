@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { SubmittedCode } from '../dto/submittedCode.dto';
+import { SubmitCodeData } from '../dto';
 import {
   ApiBody,
   ApiParam,
@@ -9,10 +9,10 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 
-export const ApiProblemSubmit = () => {
+export const ApiSubmitCode = () => {
   return applyDecorators(
     ApiBody({
-      type: SubmittedCode,
+      type: SubmitCodeData,
     }),
     ApiParam({
       name: 'id',
