@@ -15,6 +15,13 @@ import {
 } from '@/utils';
 import { JudgeStatus } from '@/types/judge';
 import { TEST_CASE_TYPE } from '@/constants';
+import { Interval } from '@nestjs/schedule';
+
+type JudgeItem = {
+  submitCodeId: number;
+  problem: Problem;
+  testCases: TestCase[];
+};
 
 @Injectable()
 export class SubmitService {
@@ -27,9 +34,19 @@ export class SubmitService {
    */
   private testCaseStatus: Map<string, JudgeStatus> = new Map();
 
+  private judgeWaitingQueue: JudgeItem[] = [];
+
+  private judgingCount = 0;
+
+  private MAX_JUDGING_COUNT = 2;
+
   constructor(
     @InjectRepository(SubmitCode) private readonly repo: Repository<SubmitCode>,
   ) {}
+
+  enqueueJudgeItem(data: JudgeItem) {
+    this.judgeWaitingQueue.push(data);
+  }
 
   async getSubmitCodeList(options: SubmitCodePaging) {
     const { problemId, snsId, pageNum, countPerPage } = options;
@@ -106,11 +123,22 @@ export class SubmitService {
     return submitCode.identifiers[0].id;
   }
 
-  public async startJudge(
-    submitCodeId: number,
-    problem: Problem,
-    testCases: TestCase[],
-  ) {
+  @Interval('judge', 1000)
+  public async startJudge() {
+    if (this.judgingCount >= this.MAX_JUDGING_COUNT) {
+      return;
+    }
+
+    const judgeItem = this.judgeWaitingQueue.shift();
+
+    if (!judgeItem) {
+      return;
+    }
+
+    this.judgingCount++;
+
+    const { problem, submitCodeId, testCases } = judgeItem;
+
     let testCaseNumber = 0;
 
     const submitCode = await this.repo.findOne({
@@ -253,6 +281,8 @@ export class SubmitService {
         score: validScore,
       });
     }
+
+    this.judgingCount--;
   }
 
   async getSubmitCodeStatus(

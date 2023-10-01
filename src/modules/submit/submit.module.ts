@@ -7,9 +7,15 @@ import { ProblemService } from '@/modules/problem/problem.service';
 import { ProblemModule } from '@/modules/problem/problem.module';
 import { UserService } from '@/modules/user/user.service';
 import { UserModule } from '@/modules/user/user.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [UserModule, ProblemModule, TypeOrmModule.forFeature([SubmitCode])],
+  imports: [
+    UserModule,
+    ProblemModule,
+    TypeOrmModule.forFeature([SubmitCode]),
+    ScheduleModule.forRoot(),
+  ],
   controllers: [SubmitController],
   providers: [SubmitService, ProblemService, UserService],
 })
