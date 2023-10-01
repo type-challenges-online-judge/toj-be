@@ -6,7 +6,6 @@ import { SubmitCodePaging, SubmitCodeSearchOptions } from './dto';
 import { SubmitCode } from '@/modules/submit/entities';
 import { Problem } from '@/modules/problem/entities';
 import { User } from '@/modules/user/entities';
-import { TestCase } from '@/modules/problem/entities';
 import { SCORE_STATE } from '@/constants';
 import {
   createKeyOfJudgeStatus,
@@ -16,12 +15,7 @@ import {
 import { JudgeStatus } from '@/types/judge';
 import { TEST_CASE_TYPE } from '@/constants';
 import { Interval } from '@nestjs/schedule';
-
-type JudgeItem = {
-  submitCodeId: number;
-  problem: Problem;
-  testCases: TestCase[];
-};
+import type { JudgeItem } from '@/types/judge';
 
 @Injectable()
 export class SubmitService {
