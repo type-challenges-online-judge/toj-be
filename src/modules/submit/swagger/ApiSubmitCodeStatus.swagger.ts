@@ -5,7 +5,7 @@ import {
   ApiOperation,
 } from '@nestjs/swagger';
 
-export const ApiProblemSubmitStatus = () => {
+export const ApiSubmitCodeStatus = () => {
   return applyDecorators(
     ApiBadRequestResponse({
       description:

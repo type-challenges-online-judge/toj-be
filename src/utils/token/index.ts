@@ -1,5 +1,5 @@
 import * as jwt from 'jsonwebtoken';
-import { configService } from '@/config/config.service';
+import { configService } from '@/config';
 
 class TokenService {
   JWT_EXPIRES_IN = '1h';
