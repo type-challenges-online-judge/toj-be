@@ -6,3 +6,9 @@ export type JudgeStatus = {
   currentTestCase?: number;
   totalTestCaseLength?: number;
 };
+
+export type JudgeItem = {
+  submitCodeId: number;
+  problem: Problem;
+  testCases: TestCase[];
+};

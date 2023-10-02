@@ -90,11 +90,7 @@ export class SubmitController {
      */
     const testCases = await this.problemService.getTestCases(problemId);
 
-    try {
-      this.submitService.startJudge(submitCodeId, problem, testCases);
-    } catch (e) {
-      console.log(e);
-    }
+    this.submitService.enqueueJudgeItem({ submitCodeId, problem, testCases });
 
     return responseTemplate('정답 제출이 완료되어 채점이 시작되었습니다.', {
       submitCodeId,
