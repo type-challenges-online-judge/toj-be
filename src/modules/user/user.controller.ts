@@ -4,6 +4,7 @@ import {
   Req,
   UseGuards,
   InternalServerErrorException,
+  Query,
 } from '@nestjs/common';
 import { AuthGuard } from '@/guards';
 import { ApiTags } from '@nestjs/swagger';
@@ -11,7 +12,8 @@ import { UserService } from './user.service';
 import type { Request } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
 import { responseTemplate } from '@/utils';
-import { ApiUserInfo } from './swagger';
+import { ApiUserInfo, ApiUsersSolvedProblems } from './swagger';
+import { SolvedProblemSearchOptions } from './dto';
 
 @ApiTags('user')
 @Controller('user')
@@ -43,5 +45,21 @@ export class UserController {
     const userInfo = await this.userService.getUserInfo(snsId);
 
     return responseTemplate('성공적으로 사용자 정보를 조회했습니다.', userInfo);
+  }
+
+  @ApiUsersSolvedProblems()
+  @Get('solved')
+  async getUsersSolvedProblems(@Query() query: SolvedProblemSearchOptions) {
+    const { snsId, minify } = query;
+
+    const solvedProblemList = await this.userService.getUsersSolvedProblems(
+      snsId,
+      minify,
+    );
+
+    return responseTemplate(
+      '성공적으로 풀이한 문제 리스트를 조회했습니다.',
+      solvedProblemList,
+    );
   }
 }
