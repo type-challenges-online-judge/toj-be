@@ -5,22 +5,6 @@ import { Brackets, Repository } from 'typeorm';
 import { SubmitCode } from '@/modules/submit/entities';
 import { SCORE_STATE } from '@/constants';
 
-type UserInfo = {
-  snsId: number;
-  name: string;
-  profileUrl: string;
-};
-
-type SolvedProblemItem = {
-  id: number;
-  title: string;
-  level: string;
-  number: number;
-  oldestSolvedDate: Date;
-};
-
-type MinifiedSolvedProblemItem = Pick<SolvedProblemItem, 'id'>;
-
 @Injectable()
 export class UserService {
   constructor(
