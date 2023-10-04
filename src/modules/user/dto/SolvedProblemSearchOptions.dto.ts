@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsNumber, IsBoolean, IsOptional } from 'class-validator';
 
 export class SolvedProblemSearchOptions {
@@ -19,5 +20,6 @@ export class SolvedProblemSearchOptions {
   })
   @IsOptional()
   @IsBoolean()
+  @Transform(({ value }) => value === 'true')
   minify: boolean;
 }
