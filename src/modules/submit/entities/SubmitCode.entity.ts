@@ -21,10 +21,12 @@ export class SubmitCode extends BaseEntity {
   valid_score: number;
 
   @ManyToOne(() => User, (user) => user.submitCode, { nullable: false })
+  @Column('bigint', { name: 'userId' })
   user: User;
 
   @ManyToOne(() => Problem, (problem) => problem.submitCode, {
     nullable: false,
   })
+  @Column('bigint', { name: 'problemId' })
   problem: Problem;
 }
