@@ -12,7 +12,7 @@ import { UserService } from './user.service';
 import type { Request } from 'express';
 import type { JwtPayload } from 'jsonwebtoken';
 import { responseTemplate } from '@/utils';
-import { ApiUserInfo } from './swagger';
+import { ApiUserInfo, ApiUsersSolvedProblems } from './swagger';
 import { SolvedProblemSearchOptions } from './dto';
 
 @ApiTags('user')
@@ -47,6 +47,7 @@ export class UserController {
     return responseTemplate('성공적으로 사용자 정보를 조회했습니다.', userInfo);
   }
 
+  @ApiUsersSolvedProblems()
   @Get('solved')
   async getUsersSolvedProblems(@Query() query: SolvedProblemSearchOptions) {
     const { snsId, minify } = query;
