@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsNumber } from 'class-validator';
+import { IsOptional, IsNumber, IsEnum } from 'class-validator';
+import { SubmitCodeResult } from '../constants';
 
 export class SubmitCodeSearchOptions {
   @ApiProperty({
@@ -17,4 +18,13 @@ export class SubmitCodeSearchOptions {
   @IsOptional()
   @IsNumber()
   snsId: number | undefined;
+
+  @ApiProperty({
+    required: false,
+    description:
+      '`right`, `wrong`, `correct`, `valid` 4가지 결과보기 옵션을 제공합니다. (전달하지 않을 경우 전체보기)',
+  })
+  @IsOptional()
+  @IsEnum(SubmitCodeResult)
+  resultType: SubmitCodeResult;
 }

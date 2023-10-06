@@ -1,5 +1,9 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation } from '@nestjs/swagger';
+import {
+  ApiOkResponse,
+  ApiOperation,
+  ApiBadRequestResponse,
+} from '@nestjs/swagger';
 
 export const ApiSubmitCodeList = () => {
   return applyDecorators(
@@ -33,6 +37,10 @@ export const ApiSubmitCodeList = () => {
           ],
         },
       },
+    }),
+    ApiBadRequestResponse({
+      description:
+        '쿼리 스트링의 필수 속성을 입력하지 않았거나, 올바른 타입의 값을 전달하지 않았습니다.',
     }),
   );
 };

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import type { FindOptionsWhere } from 'typeorm';
+import type { SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { SubmitCodePaging, SubmitCodeSearchOptions } from './dto';
 import { SubmitCode } from '@/modules/submit/entities';
 import { Problem } from '@/modules/problem/entities';
@@ -16,6 +16,7 @@ import { JudgeStatus } from '@/types/judge';
 import { TEST_CASE_TYPE } from '@/constants';
 import { Interval } from '@nestjs/schedule';
 import type { JudgeItem } from '@/types/judge';
+import { Brackets } from 'typeorm';
 
 @Injectable()
 export class SubmitService {
@@ -42,25 +43,92 @@ export class SubmitService {
     this.judgeWaitingQueue.push(data);
   }
 
-  async getSubmitCodeList(options: SubmitCodePaging) {
-    const { problemId, snsId, pageNum, countPerPage } = options;
+  getApplyOptionsSelectQB(
+    options: SubmitCodeSearchOptions,
+  ): SelectQueryBuilder<SubmitCode> {
+    const { problemId, snsId, resultType } = options;
 
-    const where = [];
+    const wheres: ApplyWhereExpressionFunction[] = [];
+
+    switch (resultType) {
+      case 'right':
+        wheres.push((qb: WhereExpressionBuilder) => {
+          qb.andWhere(
+            new Brackets((qb) => {
+              qb.orWhere(`submitCode.correct_score = 100`).orWhere(
+                `submitCode.correct_score = ${SCORE_STATE.NOT_EXIST}`,
+              );
+            }),
+          ).andWhere(
+            new Brackets((qb) => {
+              qb.orWhere(`submitCode.valid_score = 100`).orWhere(
+                `submitCode.valid_score = ${SCORE_STATE.NOT_EXIST}`,
+              );
+            }),
+          );
+        });
+        break;
+      case 'wrong':
+        wheres.push((qb: WhereExpressionBuilder) => {
+          qb.andWhere(
+            new Brackets((qb) => {
+              qb.orWhere(`submitCode.correct_score = 0`).orWhere(
+                `submitCode.correct_score = ${SCORE_STATE.NOT_EXIST}`,
+              );
+            }),
+          ).andWhere(
+            new Brackets((qb) => {
+              qb.orWhere(`submitCode.valid_score = 0`).orWhere(
+                `submitCode.valid_score = ${SCORE_STATE.NOT_EXIST}`,
+              );
+            }),
+          );
+        });
+        break;
+      case 'correct':
+        wheres.push((qb: WhereExpressionBuilder) => {
+          qb.andWhere(
+            new Brackets((qb) => {
+              qb.orWhere(`submitCode.correct_score = 100`);
+            }),
+          );
+        });
+        break;
+      case 'valid':
+        wheres.push((qb: WhereExpressionBuilder) => {
+          qb.andWhere(
+            new Brackets((qb) => {
+              qb.orWhere(`submitCode.valid_score = 100`);
+            }),
+          );
+        });
+        break;
+      default:
+        break;
+    }
 
     if (!isNaN(problemId)) {
-      where.push(`problem.id = ${problemId}`);
+      wheres.push((qb: WhereExpressionBuilder) => {
+        qb.andWhere(`problem.id = ${problemId}`);
+      });
     }
 
     if (!isNaN(snsId)) {
-      where.push(`user.snsId = ${snsId}`);
+      wheres.push((qb: WhereExpressionBuilder) => {
+        qb.andWhere(`user.snsId = ${snsId}`);
+      });
     }
 
-    const submitCodeList = await this.repo
+    const applyOptionsSelectQB = this.repo
       .createQueryBuilder('submitCode')
       .select()
-      .where(where.join(' AND '))
-      .skip(countPerPage * (pageNum - 1))
-      .take(countPerPage)
+      .where(
+        new Brackets((qb) => {
+          wheres.forEach((where) => {
+            where(qb);
+          });
+        }),
+      )
       .leftJoin('submitCode.problem', 'problem')
       .leftJoin('submitCode.user', 'user')
       .addSelect([
@@ -70,7 +138,17 @@ export class SubmitService {
         'problem.number',
         'user.snsId',
         'user.name',
-      ])
+      ]);
+
+    return applyOptionsSelectQB;
+  }
+
+  async getSubmitCodeList(options: SubmitCodePaging) {
+    const { pageNum, countPerPage } = options;
+
+    const submitCodeList = await this.getApplyOptionsSelectQB(options)
+      .skip(countPerPage * (pageNum - 1))
+      .take(countPerPage)
       .orderBy('submitCode.createdAt', 'DESC')
       .getMany();
 
@@ -78,25 +156,7 @@ export class SubmitService {
   }
 
   async getSubmitCodeListSize(options: SubmitCodeSearchOptions) {
-    const { problemId, snsId } = options;
-
-    const where: FindOptionsWhere<SubmitCode> = {};
-
-    if (problemId) {
-      where.problem = {
-        id: problemId,
-      };
-    }
-
-    if (snsId) {
-      where.user = {
-        snsId,
-      };
-    }
-
-    const length = await this.repo.count({
-      where,
-    });
+    const length = await this.getApplyOptionsSelectQB(options).getCount();
 
     return length;
   }
