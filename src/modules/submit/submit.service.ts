@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import type { FindOptionsWhere, WhereExpressionBuilder } from 'typeorm';
+import type { SelectQueryBuilder, WhereExpressionBuilder } from 'typeorm';
 import { SubmitCodePaging, SubmitCodeSearchOptions } from './dto';
 import { SubmitCode } from '@/modules/submit/entities';
 import { Problem } from '@/modules/problem/entities';
@@ -43,8 +43,10 @@ export class SubmitService {
     this.judgeWaitingQueue.push(data);
   }
 
-  async getSubmitCodeList(options: SubmitCodePaging) {
-    const { problemId, snsId, pageNum, countPerPage, resultType } = options;
+  getApplyOptionsSelectQB(
+    options: SubmitCodeSearchOptions,
+  ): SelectQueryBuilder<SubmitCode> {
+    const { problemId, snsId, resultType } = options;
 
     const wheres: ApplyWhereExpressionFunction[] = [];
 
@@ -117,7 +119,7 @@ export class SubmitService {
       });
     }
 
-    const submitCodeList = await this.repo
+    const applyOptionsSelectQB = this.repo
       .createQueryBuilder('submitCode')
       .select()
       .where(
@@ -127,8 +129,6 @@ export class SubmitService {
           });
         }),
       )
-      .skip(countPerPage * (pageNum - 1))
-      .take(countPerPage)
       .leftJoin('submitCode.problem', 'problem')
       .leftJoin('submitCode.user', 'user')
       .addSelect([
@@ -138,7 +138,17 @@ export class SubmitService {
         'problem.number',
         'user.snsId',
         'user.name',
-      ])
+      ]);
+
+    return applyOptionsSelectQB;
+  }
+
+  async getSubmitCodeList(options: SubmitCodePaging) {
+    const { pageNum, countPerPage } = options;
+
+    const submitCodeList = await this.getApplyOptionsSelectQB(options)
+      .skip(countPerPage * (pageNum - 1))
+      .take(countPerPage)
       .orderBy('submitCode.createdAt', 'DESC')
       .getMany();
 
@@ -146,25 +156,7 @@ export class SubmitService {
   }
 
   async getSubmitCodeListSize(options: SubmitCodeSearchOptions) {
-    const { problemId, snsId } = options;
-
-    const where: FindOptionsWhere<SubmitCode> = {};
-
-    if (problemId) {
-      where.problem = {
-        id: problemId,
-      };
-    }
-
-    if (snsId) {
-      where.user = {
-        snsId,
-      };
-    }
-
-    const length = await this.repo.count({
-      where,
-    });
+    const length = await this.getApplyOptionsSelectQB(options).getCount();
 
     return length;
   }
