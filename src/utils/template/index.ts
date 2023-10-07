@@ -18,7 +18,7 @@ export const createCorrectTestCases = async (
   const ret: TestCase[] = [];
 
   const correctRegExp =
-    /Expect\s*<\s*(Equal|Alike)\s*<(.|\n)*?(>\s*){2,},{0,1}/g;
+    /(Expect(True|False){0,1}|Is(True|False){1})\s*<\s*(Equal|Alike|ExpectExtends|IsAny|NotAny)\s*<(.|\n)*?(>\s*){2,},{0,1}/g;
 
   const correctTestTemplate = template.replaceAll(
     '// @ts-expect-error',
@@ -64,7 +64,7 @@ export const createValidTestCases = async (
   const ret: TestCase[] = [];
 
   const correctRegExp =
-    /Expect\s*<\s*(Equal|Alike)\s*<(.|\n)*?(>\s*){2,},{0,1}/g;
+    /(Expect(True|False){0,1}|Is(True|False){1})\s*<\s*(Equal|Alike|ExpectExtends|IsAny|NotAny)\s*<(.|\n)*?(>\s*){2,},{0,1}/g;
 
   const validTestTemplate = template.replaceAll(correctRegExp, '');
 
