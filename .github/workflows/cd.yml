@@ -18,7 +18,7 @@ jobs:
         uses: cloudtype-github-actions/deploy@v1
         with:
           token: ${{ secrets.CLOUDTYPE_TOKEN }}
-          project: toj2308/toj-be-dev
+          project: toj-be-prod/toj-be-prod
           stage: main
           yaml: |
             name: toj-be
