@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { UserModule } from './modules/user/user.module';
 import cookieParser = require('cookie-parser');
 import { SubmitModule } from './modules/submit/submit.module';
+import { configService } from './config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -46,7 +47,9 @@ async function bootstrap() {
    * swagger 관련 설정
    */
   const config = new DocumentBuilder()
-    .setTitle('TOJ API Spec')
+    .setTitle(
+      `TOJ API Spec ${configService.isProduction() ? '(PROD)' : '(DEV)'}`,
+    )
     .setDescription('Type-challenges Online Judge의 API 명세입니다.')
     .setVersion('0.0.1')
     .addBearerAuth()
