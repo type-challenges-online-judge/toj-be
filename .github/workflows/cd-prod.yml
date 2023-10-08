@@ -1,0 +1,54 @@
+name: Deploy to cloudtype
+on:
+  push:
+    branches:
+      - main
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Connect deploy key
+        uses: cloudtype-github-actions/connect@v1
+        with:
+          token: ${{ secrets.CLOUDTYPE_TOKEN }}
+          ghtoken: ${{ secrets.GHP_TOKEN }}
+      - name: Deploy
+        uses: cloudtype-github-actions/deploy@v1
+        with:
+          token: ${{ secrets.CLOUDTYPE_TOKEN }}
+          project: toj-be-prod/toj-be-prod
+          stage: main
+          yaml: |
+            name: toj-be
+            app: node@18
+            options:
+              env:
+                - name: GITHUB_OAUTH_CLIENT_ID
+                  secret: GITHUB_OAUTH_CLIENT_ID
+                - name: GITHUB_OAUTH_CLIENT_SECRET
+                  secret: GITHUB_OAUTH_CLIENT_SECRET
+                - name: GITHUB_PERSONAL_TOKEN
+                  secret: GITHUB_PERSONAL_TOKEN
+                - name: JWT_SECRET
+                  secret: JWT_SECRET
+                - name: MODE
+                  secret: MODE
+                - name: POSTGRE_DATABASE
+                  secret: POSTGRE_DATABASE
+                - name: POSTGRE_HOST
+                  secret: POSTGRE_HOST
+                - name: POSTGRE_PASSWORD
+                  secret: POSTGRE_PASSWORD
+                - name: POSTGRE_PORT
+                  secret: POSTGRE_PORT
+                - name: POSTGRE_USERNAME
+                  secret: POSTGRE_USERNAME
+              ports: 3000
+              build: npm run build
+              start: npm run start:prod
+            context:
+              git:
+                url: git@github.com:${{ github.repository }}.git
+                ref: ${{ github.ref }}
