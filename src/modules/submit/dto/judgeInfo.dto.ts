@@ -5,7 +5,7 @@ import { TEST_CASE_TYPE } from '@/constants';
 export class JudgeInfo {
   @ApiProperty({
     required: true,
-    example: TEST_CASE_TYPE.CORRECT,
+    description: '`correct`, `valid` 중 하나',
   })
   @IsString()
   type: TEST_CASE_TYPE;
