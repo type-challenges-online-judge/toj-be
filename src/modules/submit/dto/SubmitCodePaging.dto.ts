@@ -6,7 +6,7 @@ export class SubmitCodePaging extends SubmitCodeSearchOptions {
   @ApiProperty({
     required: true,
     description:
-      '확인하려는 페이지의 번호(1 ~ ⌈조건에 맞는 게시글 수 /  `pagePerCount`⌉)입니다.',
+      '확인하려는 페이지의 번호(1 ~ ⌈조건에 맞는 게시글 수 /  `countPerPage`⌉)입니다.',
   })
   @IsNumber()
   pageNum: number;

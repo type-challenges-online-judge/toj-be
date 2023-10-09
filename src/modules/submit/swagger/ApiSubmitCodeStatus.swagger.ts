@@ -3,6 +3,7 @@ import {
   ApiBadRequestResponse,
   ApiOkResponse,
   ApiOperation,
+  ApiParam,
 } from '@nestjs/swagger';
 
 export const ApiSubmitCodeStatus = () => {
@@ -26,6 +27,11 @@ export const ApiSubmitCodeStatus = () => {
           },
         },
       },
+    }),
+    ApiParam({
+      name: 'id',
+      required: true,
+      description: '제출 코드의 고유 id',
     }),
     ApiOperation({
       summary: '제출 코드의 채점 현황을 조회합니다.',
